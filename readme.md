@@ -1,11 +1,14 @@
 # Wire Genie - Dependency Provider
 
-> This is an early DRAFT.
+> 🤚 This is an early DRAFT. 🤚
+
+
+> 💿 `composer require dakujem/wire-genie`
 
 Allows to fetch multiple dependencies from a DI container
 and provide them as arguments to a callable.
 
-> Disclaimer
+> Disclaimer 🤚
 >
 > Depending on actual use, this might be breaking IoC
 > and degrade your dependency-injection container to a service locator,
@@ -27,7 +30,7 @@ Wire genie fetches the dependencies you specify from a container and passes them
 $container = ContainerPopulator::populate(new Sleeve()); // you any PSR-11 compatible container you like
 
 // this factory function is what you would like to call, given the dependencies:
-$callable = function(MyService $s1, MyOtherSevice $s2){
+$callable = function(MyServiceInterface $s1, MyOtherSeviceInterface $s2){
     // do stuff, create other objects, system services and so on...
     return new ComplexService($s1, $s2);
 };
@@ -36,7 +39,7 @@ $callable = function(MyService $s1, MyOtherSevice $s2){
 $complexService = $wg->provide('myService', 'my-other-service')($callable);
 ```
 
-**Real use case #1**\
+**A Real Use Case**\
 Allow a service access to all services of certain type without injecting them all.
 
 ```php
@@ -47,10 +50,17 @@ $repoGenie = new WireGenie(new WireLimiter($container, [
 ```
 You can now access or provide to further calls any repository using the genie:
 ```php
-$repoGenie->provide(ThisRepository::class, ThatRepository::class)(function(ThisRepository $r1, ThatRepository $r2){
+$repoGenie->provide(
+    ThisRepo::class,
+    ThatRepo::class
+)(function(
+    ThisRepository $r1,
+    ThatRepository $r2
+){
     // do stuff with the repos...
 });
 ```
+> Note the _callable_ returned by `WireGenie::provide()` method and its immediate invocation.
 
 As you can see, it is important to limit access to certain services to keep your app layers in good shape.
 
