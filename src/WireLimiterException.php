@@ -8,8 +8,10 @@ use Throwable;
 
 /**
  * The access the service is not allowed.
+ *
+ * @author Andrej Rypák (dakujem) <xrypak@gmail.com>
  */
-class LimiterException extends RuntimeException implements ContainerExceptionInterface
+class WireLimiterException extends RuntimeException implements ContainerExceptionInterface
 {
     public function __construct($message = null, $code = 0, Throwable $previous = null)
     {

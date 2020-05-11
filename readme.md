@@ -64,5 +64,35 @@ $repoGenie->provide(
 
 As you can see, it is important to limit access to certain services to keep your app layers in good shape.
 
+### Example
 
+```php
+// Given a factory function like the following one:
+$factoryFunction = function( /*...dependencies...*/ ){
+    // do stuff or create stuff
+    return new Service( /*...dependencies...*/ );
+};
+
+// Give access to full DI container
+// or use WireLimiter to limit access to certain services only.
+$genie = new WireGenie( $serviceContainer );
+
+// A dependency identifier may be a string key or a class name,
+// depending on your container implementation.
+$invokableProvider = $genie->provide( /*...dependency-identifier-list...*/ );
+
+// Invoke the factory like this,
+$service = $invokableProvider->invoke($factoryFunction);
+// or like this.
+$service = $invokableProvider($factoryFunction);
+```
+
+Shorthand syntax:
+```php
+$genie->provide( ... )($factoryfunction);
+$genie->provide( ... )->invoke($factoryfunction);
+
+$genie->provide( ... )(function( ... ){ ... });
+$genie->provide( ... )->invoke(function( ... ){ ... });
+```
 

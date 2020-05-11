@@ -4,11 +4,24 @@ namespace Dakujem;
 
 use Psr\Container\ContainerInterface;
 
+/**
+ * A container wrapper that limits access to whitelisted class instances only.
+ *
+ * Usage:
+ *   $limitedContainer = new WireLimiter( $fullContainer, [ WhitelistOnlyThisInterface::class ] );
+ *   new WireGenie( $limitedContainer );
+ *
+ * @author Andrej Rypák (dakujem) <xrypak@gmail.com>
+ */
 final class WireLimiter implements ContainerInterface
 {
     private $container;
     private $whitelist;
 
+    /**
+     * @param ContainerInterface $container main container to delegate the calls to
+     * @param string[] $whitelist list of allowed class names
+     */
     public function __construct(ContainerInterface $container, array $whitelist)
     {
         $this->container = $container;
@@ -20,6 +33,9 @@ final class WireLimiter implements ContainerInterface
         return $this->container->has($id);
     }
 
+    /**
+     * @throws WireLimiterException
+     */
     public function get(string $id)
     {
         $dep = $this->container->get($id);
@@ -28,6 +44,6 @@ final class WireLimiter implements ContainerInterface
                 return $dep;
             }
         }
-        throw new LimiterException();
+        throw new WireLimiterException();
     }
 }
