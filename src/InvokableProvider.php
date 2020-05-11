@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Dakujem;
 
 /**
@@ -18,9 +20,9 @@ class InvokableProvider
     private $callArgs;
 
     /**
-     * @param array $callArgs arguments that will be passed to callables during the invocation.
+     * @param mixed ...$callArgs arguments that will be passed to callables during the invocation.
      */
-    public function __construct(array $callArgs)
+    public function __construct(...$callArgs)
     {
         $this->callArgs = $callArgs;
     }

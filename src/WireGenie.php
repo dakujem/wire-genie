@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Dakujem;
 
+use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -49,7 +52,7 @@ final class WireGenie
             return $this->container->has($dep) ? $this->container->get($dep) : null;
         }, $dependencies);
 
-        return new InvokableProvider($resolved);
+        return new InvokableProvider(...$resolved);
     }
 
     /**
@@ -64,7 +67,7 @@ final class WireGenie
             return $this->container->get($dep); // will throw if the dependency is not present
         }, $dependencies);
 
-        return new InvokableProvider($resolved);
+        return new InvokableProvider(...$resolved);
     }
 
     /**
@@ -84,6 +87,6 @@ final class WireGenie
             }
         }, $dependencies);
 
-        return new InvokableProvider($resolved);
+        return new InvokableProvider(...$resolved);
     }
 }

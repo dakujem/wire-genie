@@ -12,9 +12,16 @@
     "php": ">=7.2",
     "psr/container": "^1"
   },
+  "require-dev": {
+    "dakujem/sleeve": "^1",
+    "phpunit/phpunit": "^8 || ^9.1"
+  },
   "autoload": {
     "psr-4": {
       "Dakujem\\": "src/"
     }
+  },
+  "scripts": {
+    "test": "phpunit tests"
   }
 }

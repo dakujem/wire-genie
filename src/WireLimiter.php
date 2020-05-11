@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Dakujem;
 
 use Psr\Container\ContainerInterface;
@@ -28,7 +30,7 @@ final class WireLimiter implements ContainerInterface
         $this->whitelist = $whitelist;
     }
 
-    public function has(string $id): bool
+    public function has($id): bool
     {
         return $this->container->has($id);
     }
@@ -36,7 +38,7 @@ final class WireLimiter implements ContainerInterface
     /**
      * @throws WireLimiterException
      */
-    public function get(string $id)
+    public function get($id)
     {
         $dep = $this->container->get($id);
         foreach ($this->whitelist as $className) {
