@@ -80,7 +80,8 @@ $repoGenie->provide('my-system-service');
 > Normally you want to wire your dependencies when building your app's DI container.
 
 You now have means to allow a service
-on-demand access to services of a certain type without injecting them all.
+on-demand access to services of a certain type without injecting them all.\
+This particular use-case breaks IoC, though.
 ```php
 new RepositoryUser($repoGenie);
 
