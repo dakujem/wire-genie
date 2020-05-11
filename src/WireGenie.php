@@ -41,7 +41,7 @@ final class WireGenie
      * Alternatively, you can use `provideStrict` or `provideSafe` for different behaviour.
      *
      * @param mixed ...$dependencies list of identifiers for the container
-     * @return callable
+     * @return InvokableProvider
      */
     public function provide(...$dependencies): callable
     {
@@ -56,7 +56,7 @@ final class WireGenie
      * Same as `provide`, except an exception is thrown when the container can not or will not resolve a dependency.
      *
      * @param mixed ...$dependencies list of identifiers for the container
-     * @return callable
+     * @return InvokableProvider
      */
     public function provideStrict(...$dependencies): callable
     {
@@ -72,7 +72,7 @@ final class WireGenie
      * Dependencies that can not or will not be resolved by the container are resolved to null.
      *
      * @param mixed ...$dependencies list of identifiers for the container
-     * @return callable
+     * @return InvokableProvider
      */
     public function provideSafe(...$dependencies): callable
     {
