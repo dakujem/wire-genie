@@ -12,7 +12,7 @@ and provide them as arguments to a callable.
 >
 > Depending on actual use, this might be breaking IoC
 > and degrade your dependency-injection container to a service locator,
-> so use with caution.
+> so use it with caution.
 >
 > But then again, if you can `get` from your container, you can use wire genie.
 
@@ -30,13 +30,13 @@ Wire genie fetches the dependencies you specify from a container and passes them
 $container = ContainerPopulator::populate(new Sleeve()); // you any PSR-11 compatible container you like
 
 // this factory function is what you would like to call, given the dependencies:
-$callable = function(MyServiceInterface $s1, MyOtherSeviceInterface $s2){
+$factory = function(MyServiceInterface $s1, MyOtherSeviceInterface $s2){
     // do stuff, create other objects, system services and so on...
     return new ComplexService($s1, $s2);
 };
 
 // wire genie fetches the dependencies and provides them to the callable and executes it:
-$complexService = $wg->provide('myService', 'my-other-service')($callable);
+$complexService = $wg->provide('myService', 'my-other-service')->invoke($factory);
 ```
 
 **A Real Use Case**\
@@ -53,7 +53,7 @@ You can now access or provide to further calls any repository using the genie:
 $repoGenie->provide(
     ThisRepo::class,
     ThatRepo::class
-)(function(
+)->invoke(function(
     ThisRepository $r1,
     ThatRepository $r2
 ){
@@ -64,7 +64,8 @@ $repoGenie->provide(
 
 As you can see, it is important to limit access to certain services to keep your app layers in good shape.
 
-### Example
+
+### Example pseudocode
 
 ```php
 // Given a factory function like the following one:
