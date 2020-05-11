@@ -1,5 +1,8 @@
 # Wire Genie - Dependency Provider
 
+[![Build Status](https://travis-ci.org/dakujem/wire-genie.svg?branch=master)](https://travis-ci.org/dakujem/wire-genie)
+
+
 > 💿 `composer require dakujem/wire-genie`
 
 Allows to fetch multiple dependencies from a DI container
