@@ -68,7 +68,9 @@ $factory = function(MyServiceInterface $s1, MyOtherSeviceInterface $s2){
 // and provides them to the callable when you call the `invoke` method:
 $complexService = $genie->provide('myService', 'my-other-service')->invoke($factory);
 
-// Repo genie will only be able to fetch repositories, the following fails:
+// Repo genie will only be able to fetch repositories,
+// the following call would fail
+// if 'my-system-service' service did not implement RepositoryInterface:
 $repoGenie->provide('my-system-service');
 ```
 
@@ -83,12 +85,13 @@ You now have means to allow a service
 on-demand access to services of a certain type without injecting them all.\
 This particular use-case breaks IoC, though.
 ```php
+// using $repoGenie from the previous snippet
 new RepositoryUser($repoGenie);
 
 // inside RepositoryUser
 $repoGenie->provide(
-    ThisRepo::class,
-    ThatRepo::class
+    ThisRepo::class, // or 'this' ✳
+    ThatRepo::class  // or 'that' ✳
 )->invoke(function(
     ThisRepository $r1,
     ThatRepository $r2
@@ -96,9 +99,12 @@ $repoGenie->provide(
     // do stuff with the repos...
 });
 ```
-> Note the _callable_ returned by `WireGenie::provide()` method and its immediate invocation.
+> ✳ the actual keys depend on the container in use
+> and the way the services are registered in it.\
+> These identifiers are bare strings without their own semantics.
+> They may or may not be related to the actual instances that are fetched from the container.
 
-As you can see, it is important to limit access
+In use cases like the one above, it is important to limit access
 to certain services only to keep your app layers in good shape.
 
 
@@ -137,6 +143,61 @@ $genie->provide( ... )->invoke(function( ... ){ ... });
 ```
 
 
+## Automatic dependency resolution
+
+You might consider implementing reflection-based automatic dependency resolution.
+
+> Note that using reflection might have negative performance impact
+> if used heavily.
+
+This code would work for closures, provided the type-hinted class names are
+equal to the identifiers of services in the DI container,
+i.e. the container will fetch correct instances if called with class name
+argument like this `$container->get(ClassName::class)`:
+```php
+final class ArgumentReflector
+{
+    public static function types(Closure $closure): array
+    {
+        $rf = new ReflectionFunction($closure);
+        return array_map(function (ReflectionParameter $rp): string {
+            $type = ($rp->getClass())->name ?? null;
+            if ($type === null) {
+                throw new RuntimeException(
+                    sprintf(
+                        'Unable to reflect type of parameter "%s".',
+                        $rp->getName()
+                    )
+                );
+            }
+            return $type;
+        }, $rf->getParameters());
+    }
+}
+
+// Implement a method like this:
+function wireAndExecute(Closure $closure)
+{
+    $genie = new WireGenie( $this->container ); // get a Wire Genie instance
+    return
+        $genie
+            ->provide(...ArgumentReflector::types($closure))
+            ->invoke($closure);
+}
+
+// Then use it to call closures without explicitly specifying the dependencies:
+$result = $foo->wireAndExecute(function(DepOne $d1, DepTwo $d2){
+    // do or create stuff
+    return $d1->foo() + $d2->bar();
+});
+
+// The PSR-11 container will be asked to
+//   ::get(DepOne::class)
+//   ::get(DepTwo::class)
+// instances.
+```
+
+
 ## Contributing
 
-Ideas or contribution is welcome. Please make a PR or file an issue.
+Ideas or contribution is welcome. Please send a PR or file an issue.
