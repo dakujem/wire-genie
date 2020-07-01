@@ -15,7 +15,7 @@ use RuntimeException;
 
 require_once 'ContainerProvider.php';
 
-final class ArgumentReflector
+final class TestArgumentReflector
 {
     public static function types(Closure $closure): array
     {
@@ -38,7 +38,7 @@ final class AutomaticResolutionTest extends TestCase
     private function wireAndExecute(Closure $closure)
     {
         $genie = new WireGenie(ContainerProvider::createContainer());
-        return $genie->provide(...ArgumentReflector::types($closure))->invoke($closure);
+        return $genie->provide(...TestArgumentReflector::types($closure))->invoke($closure);
     }
 
     public function testCorrectResolution(): void
