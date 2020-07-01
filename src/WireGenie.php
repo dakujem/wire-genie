@@ -46,7 +46,7 @@ final class WireGenie
      * Alternatively, you can use `provideStrict` or `provideSafe` for different behaviour.
      *
      * @param mixed ...$dependencies list of identifiers for the container
-     * @return InvokableProvider
+     * @return InvokableProvider callable
      */
     public function provide(...$dependencies): callable
     {
@@ -61,7 +61,7 @@ final class WireGenie
      * Same as `provide`, except an exception is thrown when the container can not or will not resolve a dependency.
      *
      * @param mixed ...$dependencies list of identifiers for the container
-     * @return InvokableProvider
+     * @return InvokableProvider callable
      */
     public function provideStrict(...$dependencies): callable
     {
@@ -77,7 +77,7 @@ final class WireGenie
      * Dependencies that can not or will not be resolved by the container are resolved to null.
      *
      * @param mixed ...$dependencies list of identifiers for the container
-     * @return InvokableProvider
+     * @return InvokableProvider callable
      */
     public function provideSafe(...$dependencies): callable
     {
@@ -90,5 +90,35 @@ final class WireGenie
         }, $dependencies);
 
         return new InvokableProvider(...$resolved);
+    }
+
+    /**
+     * Returns a provider that can be used to invoke callables.
+     * Invocation arguments are resolved using the resolver for each invocation,
+     * as opposed to the `provide*` methods.
+     *
+     * The resolver is passed the dependencies, container and the target callable.
+     *
+     * A basic resolver that mimics the `WireGenie::provide` method might look like the following:
+     *  function(array $deps, $container): array {
+     *      return array_map(function($dep) use ($container) {
+     *          return $container->has($dep) ? $container->get($dep) : null;
+     *      }, $deps);
+     *  }
+     *
+     * @param callable $resolver a resolver that returns an array of call arguments;
+     *                           signature function(array $deps, ContainerInterface $c, callable $target): array
+     * @param mixed ...$dependencies list of identifiers for the container
+     * @return DormantProvider callable
+     */
+    public function wire(callable $resolver, ...$dependencies): callable
+    {
+        $deferredResolver = function (callable $target) use ($resolver, $dependencies): array {
+            // The resolver will be called to resolve the arguments.
+            // The to the resolver will be passed the dependencies, container and the target,
+            // which allows for advanced techniques to be implemented in uniform manner.
+            return call_user_func($resolver, $dependencies, $this->container, $target);
+        };
+        return new DormantProvider($deferredResolver);
     }
 }
