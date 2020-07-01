@@ -28,6 +28,8 @@ use Psr\Container\ContainerInterface;
  */
 final class WireGenie
 {
+    use PredictableAccess;
+
     /** @var ContainerInterface */
     private $container;
 

@@ -17,6 +17,8 @@ namespace Dakujem;
  */
 class InvokableProvider
 {
+    use PredictableAccess;
+
     private $callArgs;
 
     /**

@@ -17,6 +17,8 @@ use Psr\Container\ContainerInterface;
  */
 final class WireLimiter implements ContainerInterface
 {
+    use PredictableAccess;
+
     private $container;
     private $whitelist;
 
