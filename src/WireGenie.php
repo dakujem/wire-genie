@@ -113,7 +113,7 @@ final class WireGenie
      */
     public function wire(callable $resolver, ...$dependencies): callable
     {
-        $deferredResolver = function (callable $target) use ($resolver, $dependencies): array {
+        $deferredResolver = function (callable $target) use ($resolver, $dependencies) {
             // The resolver will be called to resolve the arguments.
             // The to the resolver will be passed the dependencies, container and the target,
             // which allows for advanced techniques to be implemented in uniform manner.

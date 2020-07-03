@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace Dakujem;
 
+use Closure;
 use Psr\Container\ContainerInterface;
+use ReflectionException;
 use ReflectionFunction;
 use ReflectionFunctionAbstract as FunctionRef;
+use ReflectionMethod;
 use ReflectionParameter as ParamRef;
 
 /**
- * ArgInspector
+ * Argument Inspector.
  *
  * @author Andrej Rypák (dakujem) <xrypak@gmail.com>
  */
@@ -38,7 +41,7 @@ final class ArgInspector
             ContainerInterface $container,
             callable $target
         ) use ($detector, $serviceFetcher): array {
-            $identifiers = static::detectTypes(new ReflectionFunction($target), $detector);
+            $identifiers = static::detectTypes(static::reflectionOf($target), $detector);
             if (count($identifiers) > 0) {
                 $getter = $serviceFetcher === null ? function ($id) use ($container) {
                     return $container->has($id) ? $container->get($id) : null;
@@ -68,7 +71,9 @@ final class ArgInspector
     public static function detectTypes(FunctionRef $reflection, ?callable $detector = null): array
     {
         return array_map(function (ParamRef $parameter) use ($reflection, $detector): ?string {
-            return $detector !== null ? call_user_func($detector, $parameter, $reflection) : $parameter->getClass()->name;
+            return $detector !== null ?
+                call_user_func($detector, $parameter, $reflection) :
+                static::typeHintOf($parameter);
         }, $reflection->getParameters());
     }
 
@@ -109,11 +114,11 @@ final class ArgInspector
                     preg_match_all($regexp, $dc, $m);
                     foreach ($m[2] as $i => $name) {
                         // [param_name => tag_value] map
-                        $annotations[$name] = trim($m[4][$i]);
+                        $annotations[$name] = $m[3][$i] !== '' ? trim($m[4][$i]) : null; // only when a tag is present
                     }
                 }
             }
-            return $annotations[$param->getName()] ?? ($defaultToTypeHint ? $param->getClass()->name : null);
+            return $annotations[$param->getName()] ?? ($defaultToTypeHint ? static::typeHintOf($param) : null);
         };
     }
 
@@ -150,5 +155,33 @@ final class ArgInspector
         }
         // merge with the rest of the static arguments
         return array_merge(array_values($services), array_values($staticArguments));
+    }
+
+    /**
+     * Return a reflection of a callable for type detection or other uses.
+     *
+     * @param callable $callable any valid callable (closure, invokable object, string, array)
+     * @return FunctionRef
+     * @throws ReflectionException
+     */
+    public static function reflectionOf(callable $callable): FunctionRef
+    {
+        if ($callable instanceof Closure) {
+            return new ReflectionFunction($callable);
+        }
+        if (is_string($callable)) {
+            $pcs = explode('::', $callable);
+            return count($pcs) > 1 ? new ReflectionMethod($pcs[0], $pcs[1]) : new ReflectionFunction($callable);
+        }
+        if (!is_array($callable)) {
+            $callable = [$callable, '__invoke'];
+        }
+        return new ReflectionMethod($callable[0], $callable[1]);
+    }
+
+    private static function typeHintOf(ParamRef $parameter): ?string
+    {
+        $typeHintedClass = $parameter->getClass();
+        return $typeHintedClass !== null ? $typeHintedClass->getName() : null;
     }
 }

@@ -34,6 +34,22 @@ class ContainerProvider
             return new Error('Hey! I\'m a new error. Nice to meet you.');
         }));
 
+        $sleeve->set(Foo::class, function () {
+            return new Foo;
+        });
+
+        $sleeve->set(Bar::class, function () {
+            return new Bar;
+        });
+
         return $sleeve;
     }
+}
+
+class Foo
+{
+}
+
+class Bar
+{
 }

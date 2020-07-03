@@ -3,6 +3,7 @@
 namespace Dakujem\Tests;
 
 use Dakujem\InvokableProvider;
+use Dakujem\Invoker;
 use Dakujem\WireGenie;
 use Dakujem\WireLimiter;
 use PHPUnit\Framework\TestCase;
@@ -79,7 +80,7 @@ final class WireGenieTest extends TestCase
         $wg = new WireGenie($sleeve);
 
         $this->expectException(NotFoundExceptionInterface::class);
-        $p = $wg->provideStrict('unknown', 'genie');  // this would NOT have thrown if using `provide`
+        $wg->provideStrict('unknown', 'genie');  // this would NOT have thrown if using `provide`
     }
 
     public function testSafeNullResolution()
@@ -97,15 +98,50 @@ final class WireGenieTest extends TestCase
         $wg = new WireGenie(new WireLimiter($sleeve, [])); // will throw when accessing any service
 
         $this->expectException(ContainerExceptionInterface::class);
-        $p = $wg->provide('self');
+        $wg->provide('self');
     }
 
-    private function check(array $expected, InvokableProvider $p)
+    public function testCustomResolver()
     {
-        $provided = null;
-        call_user_func($p, function (...$args) use (&$provided) {
-            $provided = $args;
+        $sleeve = ContainerProvider::createContainer();
+        $wg = new WireGenie($sleeve);
+
+        $p = $wg->wire(function () {
+            return [];
         });
-        $this->assertSame($expected, $provided);
+        $this->check([], $p);
+        $p = $wg->wire(function () {
+            return [1, 2, 3, 42, 'foo'];
+        });
+        $this->check([1, 2, 3, 42, 'foo'], $p);
+    }
+
+    public function testCustomResolverIsPassedCorrectArguments()
+    {
+        $sleeve = ContainerProvider::createContainer();
+        $wg = new WireGenie($sleeve);
+
+        $p = $wg->wire(function ($deps, $container) use ($sleeve) {
+            $this->assertSame([1, 2, 3, 42, 'foo'], $deps);
+            $this->assertSame($sleeve, $container);
+            return [];
+        }, 1, 2, 3, 42, 'foo');
+        $this->check([], $p);
+
+        $checkFunc = function () {
+        };
+        $wg->wire(function ($dependencies, $container, $target) use ($sleeve, $checkFunc) {
+            $this->assertSame([], $dependencies); //   the rest arguments to the `wire` call are treated as dependencies
+            $this->assertSame($sleeve, $container); // second argument is the container of wire genie
+            $this->assertSame($checkFunc, $target); // the last argument to the resolver is the target function
+            return [];
+        })->invoke($checkFunc);
+    }
+
+    private function check(array $expected, Invoker $p)
+    {
+        $this->assertSame($expected, $p->invoke(function (...$args) {
+            return $args;
+        }));
     }
 }

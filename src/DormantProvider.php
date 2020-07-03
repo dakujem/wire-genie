@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Dakujem;
 
+use LogicException;
+
 /**
  * A provider that resolves call arguments at the moment of invocation.
  *
@@ -33,6 +35,12 @@ class DormantProvider implements Invoker
     public function invoke(callable $target)
     {
         $args = call_user_func($this->resolver, $target);
+        if (!is_iterable($args)) {
+            throw new LogicException(sprintf(
+                'The resolver must return an iterable type, %s returned.',
+                is_object($args) ? 'an instance of ' . get_class($args) : gettype($args)
+            ));
+        }
         return call_user_func($target, ...$args);
     }
 
