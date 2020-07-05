@@ -15,6 +15,8 @@ use RuntimeException;
 
 require_once 'ContainerProvider.php';
 
+// NOTE: this test is outdated, since v1.1 already ships with argument type resolution
+
 final class TestArgumentReflector
 {
     public static function types(Closure $closure): array

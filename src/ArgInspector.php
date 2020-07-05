@@ -15,6 +15,9 @@ use ReflectionParameter as ParamRef;
 /**
  * Argument Inspector.
  *
+ * Allows for reflection-based callable argument type detection.
+ * Combined with WireGenie, allows for automatic dependency resolution and injection.
+ *
  * @author Andrej Rypák (dakujem) <xrypak@gmail.com>
  */
 final class ArgInspector
@@ -52,6 +55,11 @@ final class ArgInspector
             }
             return $staticArguments;
         };
+    }
+
+    public function wiredCall(callable $code)
+    {
+        return $this->wireGenie->wire(ArgInspector::resolver(ArgInspector::tagReader()))->invoke($code);
     }
 
     /**
