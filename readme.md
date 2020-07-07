@@ -164,15 +164,15 @@ public function wiredCall(callable $code, ...$staticDependencies)
 }
 ```
 
-> Note that using reflection might have negative performance impact
-> if used heavily.
-
 Automatic argument resolution is useful for:
 - async job execution
     - supplying dependencies after a job is deserialized from a queue
 - method dependency injection
     - for controller methods, where dependencies differ between the handler methods
 - generic factories that create instances with varying dependencies
+
+> Note that using reflection might have negative performance impact
+> if used heavily.
 
 
 ## Advanced

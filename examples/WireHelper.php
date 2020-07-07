@@ -24,6 +24,16 @@ final class WireHelper
         $this->genie = $genie;
     }
 
+    /**
+     * Invokes a callable resolving its type-hinted arguments,
+     * filling in the unresolved arguments from the static argument pool.
+     * Returns the callable's return value.
+     * Using "wire" tags is enabled.
+     *
+     * @param callable $code
+     * @param mixed ...$staticArguments
+     * @return mixed the callable's return value
+     */
     public function wiredCall(callable $code, ...$staticArguments)
     {
         return
