@@ -92,7 +92,7 @@ final class ArgInspector
      *  @.param Foobar $foo description [wire:my_service_identifier]
      *
      * Usage:
-     *  $types = ArgInspector::types(new ReflectionFunction($func), ArgInspector::tagReader());
+     *  $types = ArgInspector::detectTypes(new ReflectionFunction($func), ArgInspector::tagReader());
      *
      * @param string $tag defaults to "wire"; only alphanumeric characters should be used; case insensitive
      * @param bool $defaultToTypeHint whether or not to return type-hinted class names when a tag is not present
@@ -100,14 +100,16 @@ final class ArgInspector
      */
     public static function tagReader(string $tag = null, bool $defaultToTypeHint = true): callable
     {
-        $annotations = null; // cache used for subsequent calls
+        $annotations = null; //          Cache used for subsequent calls...
+        $reflectionInstance = null; //   ...with the same reflection instance.
         return function (
             ParamRef $param,
             FunctionRef $reflection
-        ) use ($tag, &$annotations, $defaultToTypeHint): ?string {
-            if ($annotations === null) {
+        ) use ($tag, &$annotations, &$reflectionInstance, $defaultToTypeHint): ?string {
+            if ($annotations === null || $reflection !== $reflectionInstance) {
                 $dc = $reflection->getDocComment();
                 $annotations = [];
+                $reflectionInstance = $reflection;
                 if ($dc !== false && trim($dc) !== '') {
                     $m = [];
                     // modifiers: m - multiline; i - case insensitive

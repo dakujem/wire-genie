@@ -3,7 +3,7 @@
 namespace Dakujem;
 
 /**
- * A general interface for object able to invoke callables.
+ * A general interface for an object able to invoke callables.
  * These implementations will usually provide arguments to the call.
  *
  * @author Andrej Rypák (dakujem) <xrypak@gmail.com>

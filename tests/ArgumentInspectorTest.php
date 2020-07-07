@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Dakujem\Tests;
 
 use Dakujem\ArgInspector;
+use Dakujem\WireGenie;
 use PHPUnit\Framework\TestCase;
 use ReflectionFunction;
 use ReflectionFunctionAbstract;
@@ -177,6 +178,34 @@ final class ArgumentInspectorTest extends TestCase
         $this->assertSame(42, $rest);
     }
 
+    public function testReusingResolverWithTags(): void
+    {
+        $closure = function (Foo $foo, int $qux, Bar $bar, $wham) {
+        };
+        $resolver = ArgInspector::resolver(ArgInspector::tagReader());
+
+        $rv = call_user_func($resolver, [], ContainerProvider::createContainer(), $closure);
+        $this->assertCount(4, $rv);
+        $this->assertInstanceOf(Foo::class, $rv[0]);
+        $this->assertInstanceOf(Bar::class, $rv[2]);
+        $this->assertSame(null, $rv[1]);
+        $this->assertSame(null, $rv[3]);
+
+        // test to resolve arguments for a method with different signature
+        $test = function ($resolver) {
+            $rv = call_user_func($resolver, [], ContainerProvider::createContainer(), [$this, 'methodFoo']);
+            $this->assertCount(2, $rv);
+            $this->assertInstanceOf(WireGenie::class, $rv[0]);
+            $this->assertInstanceOf(Bar::class, $rv[1]);
+        };
+
+        // use a new resolver instance
+        call_user_func($test, ArgInspector::resolver(ArgInspector::tagReader()));
+
+        // reuse the first resolver
+        call_user_func($test, $resolver);
+    }
+
     /**
      * @param Foo $foo [wire:genie]
      * @param int $theAnswer [wire:Dakujem\Tests\Bar]
@@ -186,6 +215,10 @@ final class ArgumentInspectorTest extends TestCase
     }
 
     public static function methodBar(Foo $foo, int $theAnswer)
+    {
+    }
+
+    public function otherMethod(Bar $bar, Foo $foo, bool $ok)
     {
     }
 }

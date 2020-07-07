@@ -45,7 +45,7 @@ class DormantProvider implements Invoker
     }
 
     /**
-     * The provider instances are also callable.
+     * This provider instances are also callable.
      *
      * @param callable $target callable to be invoked
      * @return mixed result of the $target callable invocation
