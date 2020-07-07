@@ -106,11 +106,11 @@ final class WireGenieTest extends TestCase
         $sleeve = ContainerProvider::createContainer();
         $wg = new WireGenie($sleeve);
 
-        $p = $wg->wire(function () {
+        $p = $wg->employ(function () {
             return [];
         });
         $this->check([], $p);
-        $p = $wg->wire(function () {
+        $p = $wg->employ(function () {
             return [1, 2, 3, 42, 'foo'];
         });
         $this->check([1, 2, 3, 42, 'foo'], $p);
@@ -121,7 +121,7 @@ final class WireGenieTest extends TestCase
         $sleeve = ContainerProvider::createContainer();
         $wg = new WireGenie($sleeve);
 
-        $p = $wg->wire(function ($deps, $container) use ($sleeve) {
+        $p = $wg->employ(function ($deps, $container) use ($sleeve) {
             $this->assertSame([1, 2, 3, 42, 'foo'], $deps);
             $this->assertSame($sleeve, $container);
             return [];
@@ -130,8 +130,8 @@ final class WireGenieTest extends TestCase
 
         $checkFunc = function () {
         };
-        $wg->wire(function ($dependencies, $container, $target) use ($sleeve, $checkFunc) {
-            $this->assertSame([], $dependencies); //   the rest arguments to the `wire` call are treated as dependencies
+        $wg->employ(function ($dependencies, $container, $target) use ($sleeve, $checkFunc) {
+            $this->assertSame([], $dependencies); //   the rest arguments to the `employ` call are treated as dependencies
             $this->assertSame($sleeve, $container); // second argument is the container of wire genie
             $this->assertSame($checkFunc, $target); // the last argument to the resolver is the target function
             return [];

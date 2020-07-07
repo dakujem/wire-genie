@@ -19,10 +19,10 @@ use Psr\Container\ContainerInterface;
  *   $genie = new WireGenie( $serviceContainer ); // or use WireLimiter to limit access to certain services only
  *
  *   // an identifier may be a string key or a class name, depending on your container implementation
- *   $invokableProvider = $genie->provide( ...dependency-identifier-list... );
+ *   $invoker = $genie->provide( ...dependency-identifier-list... );
  *
- *   $service = $invokableProvider->invoke($factoryFunction); // then invoke the factory like this,
- *   $service = $invokableProvider($factoryFunction);         // or like this
+ *   $service = $invoker->invoke($factoryFunction); // then invoke the factory like this,
+ *   $service = $invoker($factoryFunction);         // or like this
  *
  * @author Andrej Rypák (dakujem) <xrypak@gmail.com>
  */
@@ -39,10 +39,10 @@ final class WireGenie
     }
 
     /**
-     * Resolves given dependencies using the container and returns a callable provider.
-     * The provider can be used to invoke other callables with the resolved dependencies.
+     * Resolves given dependencies using the container and returns an invoker.
+     * The invoker can be used to invoke other callables with the resolved dependencies.
      *
-     * When the container does not have a dependency, it is resolved to null instead.
+     * When a dependency is not present in the container, it is resolved to null instead.
      * Alternatively, you can use `provideStrict` or `provideSafe` for different behaviour.
      *
      * @param mixed ...$dependencies list of identifiers for the container
@@ -93,29 +93,30 @@ final class WireGenie
     }
 
     /**
-     * Returns a provider that can be used to invoke callables.
-     * Invocation arguments are resolved using the resolver for each invocation,
+     * Employing a resolver, returns an invoker that can be used to invoke callables.
+     * Invocation arguments are resolved using the resolver for each invocation at the moment of invocation,
      * as opposed to the `provide*` methods.
      *
-     * The resolver is passed the dependencies, container and the target callable.
+     * The resolver is passed the $dependencies as the first argument, container of the WireGenie instance
+     * and the callable being invoked.
      *
-     * A basic resolver that mimics the `WireGenie::provide` method might look like the following:
+     * Example: A basic resolver that mimics the `WireGenie::provide` method might look like the following:
      *  function(array $deps, $container): array {
      *      return array_map(function($dep) use ($container) {
      *          return $container->has($dep) ? $container->get($dep) : null;
      *      }, $deps);
      *  }
      *
-     * @param callable $resolver a resolver that returns an array of call arguments;
-     *                           signature function(array $deps, ContainerInterface $c, callable $target): array
-     * @param mixed ...$dependencies list of identifiers for the container
+     * @param callable $resolver a resolver that returns an array of invocation arguments;
+     *                           signature function(array $dependencies, ContainerInterface $c, callable $target): array
+     * @param mixed ...$dependencies list of identifiers for the container; or any other arguments usable by the resolver
      * @return DormantProvider callable
      */
-    public function wire(callable $resolver, ...$dependencies): callable
+    public function employ(callable $resolver, ...$dependencies): callable
     {
         $deferredResolver = function (callable $target) use ($resolver, $dependencies) {
             // The resolver will be called to resolve the arguments.
-            // The to the resolver will be passed the dependencies, container and the target,
+            // The dependencies, a container and the target will be passed to the call,
             // which allows for advanced techniques to be implemented in uniform manner.
             return call_user_func($resolver, $dependencies, $this->container, $target);
         };

@@ -120,7 +120,7 @@ Wire Genie package also comes with a helper class that enables automatic resolut
 
 If you find the explicit way too verbose, it is possible to omit defining the arguments, provided the arguments can be resolved using reflection:
 ```php
-$genie->wire(ArgInspector::resolver())->invoke(function( Dependency $dep1, OtherDependency $dep2 ){
+$genie->employ(ArgInspector::resolver())->invoke(function( Dependency $dep1, OtherDependency $dep2 ){
    return new Service($dep1, $dep2);
 });
 ```
@@ -143,7 +143,7 @@ In case services are accessed by plain string identifiers, doc-comments and "tag
 $factory = function( Dependency $dep1, OtherDependency $dep2 ){
   return new Service($dep1, $dep2);
 };
-$genie->wire(ArgInspector::resolver(ArgInspector::tagReader()))->invoke($factory);
+$genie->employ(ArgInspector::resolver(ArgInspector::tagReader()))->invoke($factory);
 ```
 In this case, services registered as `my-identifier` and `other-identifier` are fetched from the container.
 
@@ -157,7 +157,7 @@ You might consider implementing an invoker helper class with a method like the f
  */ 
 public function wiredCall(callable $code, ...$staticDependencies)
 {
-    return $this->wireGenie->wire(
+    return $this->wireGenie->employ(
         ArgInspector::resolver(ArgInspector::tagReader()),
         ...$staticDependencies
     )->invoke($code);
@@ -179,11 +179,11 @@ Automatic argument resolution is useful for:
 
 ### Implementing custom logic around `WireGenie`'s core
 
-`WireGenie::wire()` method enables implementing custom resolution of dependencies
+`WireGenie::employ()` method enables implementing custom resolution of dependencies
 and a custom way of fetching the services from your service container.
 
-For exmaple, if every service is accessed by its class name,
-except the backslashes `\` are replaced by dots '.' and in lower case,
+For exmaple, if every service was accessed by its class name,
+except the backslashes `\` were replaced by dots '.' and in lower case,
 you could implement the following to invoke `$target` callable:
 ```php
 $resolver = function(array $deps, Container $container, callable $target): array {
@@ -192,10 +192,10 @@ $resolver = function(array $deps, Container $container, callable $target): array
         return $container->has($key) ? $container->get($key) : null;
     }, $deps);
 };
-$genie->wire($resolver, My\Name\Space\Service::class, My\Name\Space\Foo::class)->invoke($target);
+$genie->employ($resolver, My\Name\Space\Service::class, My\Name\Space\Foo::class)->invoke($target);
 ```
 
-Note that `WireGenie::wire()` method does not resolve the dependencies at the moment of its call,
+Note that `WireGenie::employ()` method does not resolve the dependencies at the moment of its call,
 but at the moment of the callable invokation, once per each invokation.\
 This is contrary to `WireGenie::provide*()` methods,
 that resolve the dependencies at the moment of their call and only once,

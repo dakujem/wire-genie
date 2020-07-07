@@ -25,12 +25,12 @@ final class ArgInspector
     /**
      * This resolver will try to automatically detect type-hinted class names of parameters.
      * A custom detector may be used instead. For parameters where no type is detected,
-     * it will try to fill in _values_ one by one as passed to the `WireGenie::wire($res, ...$staticArguments)` call.
+     * it will try to fill in _values_ one by one as passed to the `WireGenie::employ($res, ...$staticArguments)` call.
      *
      * Usage:
-     *  $wireGenie->wire(ArgInspector::resolver())->invoke($func)
-     *  $wireGenie->wire(ArgInspector::resolver(ArgInspector::tagReader()))->invoke($func)
-     *  $wireGenie->wire(ArgInspector::resolver(), 42, 'foobar')->invoke($func)
+     *  $wireGenie->employ(ArgInspector::resolver())->invoke($func)
+     *  $wireGenie->employ(ArgInspector::resolver(ArgInspector::tagReader()))->invoke($func)
+     *  $wireGenie->employ(ArgInspector::resolver(), 42, 'foobar')->invoke($func)
      *
      * @param callable|null $detector called for every parameter, if present
      * @param callable|null $serviceFetcher fetches a service from a service container
@@ -46,20 +46,15 @@ final class ArgInspector
         ) use ($detector, $serviceFetcher): array {
             $identifiers = static::detectTypes(static::reflectionOf($target), $detector);
             if (count($identifiers) > 0) {
-                $getter = $serviceFetcher === null ? function ($id) use ($container) {
+                $serviceProvider = $serviceFetcher === null ? function ($id) use ($container) {
                     return $container->has($id) ? $container->get($id) : null;
                 } : function ($id) use ($container, $serviceFetcher) {
                     return call_user_func($serviceFetcher, $id, $container);
                 };
-                return static::resolveServicesFillingInStaticArguments($identifiers, $getter, $staticArguments);
+                return static::resolveServicesFillingInStaticArguments($identifiers, $serviceProvider, $staticArguments);
             }
             return $staticArguments;
         };
-    }
-
-    public function wiredCall(callable $code)
-    {
-        return $this->wireGenie->wire(ArgInspector::resolver(ArgInspector::tagReader()))->invoke($code);
     }
 
     /**
