@@ -115,6 +115,9 @@ final class ArgumentInspectorTest extends TestCase
         $this->assertInstanceOf(ReflectionFunctionAbstract::class, ArgInspector::reflectionOf('\fopen'));
         $this->assertInstanceOf(ReflectionFunctionAbstract::class, ArgInspector::reflectionOf([$this, 'methodFoo']));
         $this->assertInstanceOf(ReflectionFunctionAbstract::class, ArgInspector::reflectionOf(self::class . '::methodBar'));
+
+        // TODO construction of objects ??
+//        $this->assertInstanceOf(ReflectionFunctionAbstract::class, ArgInspector::reflectionOf([Bar::class, 'parent::__construct']));
     }
 
     public function testResolver()

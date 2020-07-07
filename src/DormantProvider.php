@@ -11,7 +11,7 @@ use LogicException;
  *
  * @author Andrej Rypák (dakujem) <xrypak@gmail.com>
  */
-class DormantProvider implements Invoker
+class DormantProvider implements Invoker, Constructor
 {
     use PredictableAccess;
 
@@ -42,6 +42,17 @@ class DormantProvider implements Invoker
             ));
         }
         return call_user_func($target, ...$args);
+    }
+
+    public function construct(string $target)
+    {
+        $args = call_user_func($this->resolver, $target);
+        if (!is_iterable($args)) {
+            throw new LogicException(sprintf(
+                'The resolver must return an iterable type, %s returned.',
+                is_object($args) ? 'an instance of ' . get_class($args) : gettype($args)
+            ));
+        }
     }
 
     /**
