@@ -114,11 +114,11 @@ final class WireGenie
      */
     public function employ(callable $resolver, ...$dependencies): callable
     {
-        $deferredResolver = function (callable $target) use ($resolver, $dependencies) {
+        $deferredResolver = function (callable $target, iterable $staticArgs = []) use ($resolver, $dependencies) {
             // The resolver will be called to resolve the arguments.
             // The dependencies, a container and the target will be passed to the call,
             // which allows for advanced techniques to be implemented in uniform manner.
-            return call_user_func($resolver, $dependencies, $this->container, $target);
+            return call_user_func($resolver, $dependencies, $this->container, $target, $staticArgs);
         };
         return new DormantProvider($deferredResolver);
     }

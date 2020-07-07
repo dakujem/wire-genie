@@ -30,11 +30,12 @@ class DormantProvider implements Invoker, Constructor
      * Returns the result of the call.
      *
      * @param callable $target callable to be invoked
+     * @param mixed ...$resolverArgs static arguments for the resolver
      * @return mixed result of the $target callable invocation
      */
-    public function invoke(callable $target)
+    public function invoke(callable $target, ...$resolverArgs)
     {
-        $args = call_user_func($this->resolver, $target);
+        $args = call_user_func($this->resolver, $target, ...$resolverArgs);
         if (!is_iterable($args)) {
             throw new LogicException(sprintf(
                 'The resolver must return an iterable type, %s returned.',

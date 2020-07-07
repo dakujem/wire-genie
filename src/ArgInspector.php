@@ -30,7 +30,7 @@ final class ArgInspector
      * Usage:
      *  $wireGenie->employ(ArgInspector::resolver())->invoke($func)
      *  $wireGenie->employ(ArgInspector::resolver(ArgInspector::tagReader()))->invoke($func)
-     *  $wireGenie->employ(ArgInspector::resolver(), 42, 'foobar')->invoke($func)
+     *  $wireGenie->employ(ArgInspector::resolver())->invoke($func, 42, 'foobar')
      *
      * @param callable|null $detector called for every parameter, if present
      * @param callable|null $serviceFetcher fetches a service from a service container
@@ -39,10 +39,10 @@ final class ArgInspector
     public static function resolver(?callable $detector = null, ?callable $serviceFetcher = null): callable
     {
         return function (
-            // by default these would be "dependencies", but are used as arguments by this particular resolver
-            array $staticArguments,
+            array $staticDependencies, // TODO
             ContainerInterface $container,
-            callable $target
+            callable $target,
+            array $staticArguments
         ) use ($detector, $serviceFetcher): array {
             $identifiers = static::detectTypes(static::reflectionOf($target), $detector);
             if (count($identifiers) > 0) {
