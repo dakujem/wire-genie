@@ -6,6 +6,7 @@ namespace Dakujem;
 
 use Closure;
 use Psr\Container\ContainerInterface;
+use ReflectionClass;
 use ReflectionException;
 use ReflectionFunction;
 use ReflectionFunctionAbstract as FunctionRef;
@@ -44,7 +45,7 @@ final class ArgInspector
             callable $target,
             array $staticArguments
         ) use ($detector, $serviceFetcher): array {
-            $identifiers = static::detectTypes(static::reflectionOf($target), $detector);
+            $identifiers = static::detectTypes(static::reflectionOfCallable($target), $detector);
             if (count($identifiers) > 0) {
                 $serviceProvider = $serviceFetcher === null ? function ($id) use ($container) {
                     return $container->has($id) ? $container->get($id) : null;
@@ -54,6 +55,48 @@ final class ArgInspector
                 return static::resolveServicesFillingInStaticArguments($identifiers, $serviceProvider, $staticArguments);
             }
             return $staticArguments;
+        };
+    }
+
+    /**
+     * A helper method.
+     * For each service identifier calls the service provider.
+     * If the identifier is `null`, it uses the static arguments instead.
+     *
+     * The resulting array might be a mix of services fetched from the service container via the provider
+     * and other values passed in as static arguments.
+     *
+     * @param array $identifiers
+     * @param callable $serviceProvider
+     * @param array $staticArguments
+     * @return array
+     */
+    public static function resolveServicesFillingInStaticArguments(
+        array $identifiers,
+        callable $serviceProvider,
+        array $staticArguments
+    ): array {
+        $services = [];
+        if (count($identifiers) > 0) {
+            $services = array_map(function ($id) use ($serviceProvider, &$staticArguments) {
+                if ($id !== null) {
+                    return call_user_func($serviceProvider, $id);
+                }
+                if (count($staticArguments) > 0) {
+                    return array_shift($staticArguments);
+                }
+                // when no static argument is present for an identifier, return null
+                return null;
+            }, $identifiers);
+        }
+        // merge with the rest of the static arguments
+        return array_merge(array_values($services), array_values($staticArguments));
+    }
+
+    public static function detector(?callable $paramDetector = null): callable
+    {
+        return function (FunctionRef $reflection) use ($paramDetector): array {
+            return static::detectTypes($reflection, $paramDetector);
         };
     }
 
@@ -68,14 +111,14 @@ final class ArgInspector
      *  $types = ArgInspector::types(new ReflectionMethod('Namespace\Object::method'));
      *
      * @param FunctionRef $reflection
-     * @param callable|null $detector called for each parameter, if provided
+     * @param callable|null $paramDetector called for each parameter, if provided
      * @return string[] the array may contain null values
      */
-    public static function detectTypes(FunctionRef $reflection, ?callable $detector = null): array
+    public static function detectTypes(FunctionRef $reflection, ?callable $paramDetector = null): array
     {
-        return array_map(function (ParamRef $parameter) use ($reflection, $detector): ?string {
-            return $detector !== null ?
-                call_user_func($detector, $parameter, $reflection) :
+        return array_map(function (ParamRef $parameter) use ($reflection, $paramDetector): ?string {
+            return $paramDetector !== null ?
+                call_user_func($paramDetector, $parameter, $reflection) :
                 static::typeHintOf($parameter);
         }, $reflection->getParameters());
     }
@@ -127,39 +170,11 @@ final class ArgInspector
         };
     }
 
-    /**
-     * A helper method.
-     * For each service identifier calls the service provider.
-     * If the identifier is `null`, it uses the static arguments instead.
-     *
-     * The resulting array might be a mix of services fetched from the service container via the provider
-     * and other values passed in as static arguments.
-     *
-     * @param array $identifiers
-     * @param callable $serviceProvider
-     * @param array $staticArguments
-     * @return array
-     */
-    public static function resolveServicesFillingInStaticArguments(
-        array $identifiers,
-        callable $serviceProvider,
-        array $staticArguments
-    ): array {
-        $services = [];
-        if (count($identifiers) > 0) {
-            $services = array_map(function ($id) use ($serviceProvider, &$staticArguments) {
-                if ($id !== null) {
-                    return call_user_func($serviceProvider, $id);
-                }
-                if (count($staticArguments) > 0) {
-                    return array_shift($staticArguments);
-                }
-                // when no static argument is present for an identifier, return null
-                return null;
-            }, $identifiers);
-        }
-        // merge with the rest of the static arguments
-        return array_merge(array_values($services), array_values($staticArguments));
+    public static function reflectionOf($target): FunctionRef
+    {
+        return is_string($target) && class_exists($target) ?
+            static::reflectionOfConstructor($target) :
+            static::reflectionOfCallable($target);
     }
 
     /**
@@ -169,7 +184,7 @@ final class ArgInspector
      * @return FunctionRef
      * @throws ReflectionException
      */
-    public static function reflectionOf(callable $callable): FunctionRef
+    public static function reflectionOfCallable(callable $callable): FunctionRef
     {
         if ($callable instanceof Closure) {
             return new ReflectionFunction($callable);
@@ -182,6 +197,11 @@ final class ArgInspector
             $callable = [$callable, '__invoke'];
         }
         return new ReflectionMethod($callable[0], $callable[1]);
+    }
+
+    public static function reflectionOfConstructor(string $className): FunctionRef
+    {
+        return (new ReflectionClass($className))->getConstructor();
     }
 
     private static function typeHintOf(ParamRef $parameter): ?string

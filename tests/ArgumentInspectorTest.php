@@ -105,16 +105,16 @@ final class ArgumentInspectorTest extends TestCase
 
     public function testReflectionOf()
     {
-        $this->assertInstanceOf(ReflectionFunctionAbstract::class, ArgInspector::reflectionOf(function () {
+        $this->assertInstanceOf(ReflectionFunctionAbstract::class, ArgInspector::reflectionOfCallable(function () {
         }));
-        $this->assertInstanceOf(ReflectionFunctionAbstract::class, ArgInspector::reflectionOf(new class {
+        $this->assertInstanceOf(ReflectionFunctionAbstract::class, ArgInspector::reflectionOfCallable(new class {
             public function __invoke()
             {
             }
         }));
-        $this->assertInstanceOf(ReflectionFunctionAbstract::class, ArgInspector::reflectionOf('\fopen'));
-        $this->assertInstanceOf(ReflectionFunctionAbstract::class, ArgInspector::reflectionOf([$this, 'methodFoo']));
-        $this->assertInstanceOf(ReflectionFunctionAbstract::class, ArgInspector::reflectionOf(self::class . '::methodBar'));
+        $this->assertInstanceOf(ReflectionFunctionAbstract::class, ArgInspector::reflectionOfCallable('\fopen'));
+        $this->assertInstanceOf(ReflectionFunctionAbstract::class, ArgInspector::reflectionOfCallable([$this, 'methodFoo']));
+        $this->assertInstanceOf(ReflectionFunctionAbstract::class, ArgInspector::reflectionOfCallable(self::class . '::methodBar'));
 
         // TODO construction of objects ??
 //        $this->assertInstanceOf(ReflectionFunctionAbstract::class, ArgInspector::reflectionOf([Bar::class, 'parent::__construct']));

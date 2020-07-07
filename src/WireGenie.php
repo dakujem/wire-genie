@@ -122,4 +122,16 @@ final class WireGenie
         };
         return new DormantProvider($deferredResolver);
     }
+
+    /**
+     * Exposes the internal container to a callable.
+     * A public getter for the container instance is not provided by design.
+     *
+     * @param callable $operator function(ContainerInterface $container)
+     * @return mixed forwards the return value of the callable
+     */
+    public function exposeTo(callable $operator)
+    {
+        return call_user_func($operator, $this->container, $this);
+    }
 }
