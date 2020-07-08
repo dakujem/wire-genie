@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace Dakujem;
 
 /**
- * A callable provider returned by WireGenie::provide method.
+ * A static provider returned by WireGenie::provide method(s).
+ * The instances are _callable_.
+ *
+ * All the call arguments will have been resolved at the moment of creating the instance.
  *
  * Usage:
  *   $invokableProvider = (new WireGenie( ... ))->provide( ... );
@@ -15,7 +18,7 @@ namespace Dakujem;
  *
  * @author Andrej Rypák (dakujem) <xrypak@gmail.com>
  */
-class InvokableProvider
+class InvokableProvider implements Invoker
 {
     use PredictableAccess;
 
@@ -36,20 +39,19 @@ class InvokableProvider
      * @param callable $target callable to be invoked
      * @return mixed result of the $target callable invocation
      */
-    public function __invoke(callable $target)
+    public function invoke(callable $target)
     {
-        return $this->invoke($target);
+        return call_user_func($target, ...$this->callArgs);
     }
 
     /**
-     * Invokes the callable $target with arguments passed to the constructor of the provider.
-     * Returns the result of the call.
+     * This provider instances are also callable.
      *
      * @param callable $target callable to be invoked
      * @return mixed result of the $target callable invocation
      */
-    public function invoke(callable $target)
+    public function __invoke(callable $target)
     {
-        return call_user_func($target, ...$this->callArgs);
+        return $this->invoke($target);
     }
 }

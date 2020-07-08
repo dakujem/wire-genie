@@ -10,10 +10,10 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerExceptionInterface;
 use Throwable;
 
-require_once 'ContainerProvider.php';
+require_once 'testHelperClasses.php';
 
 /**
- * WireLimiterTest
+ * @internal test
  */
 final class WireLimiterTest extends TestCase
 {
