@@ -19,10 +19,10 @@ use Psr\Container\ContainerInterface;
  *   $genie = new WireGenie( $serviceContainer ); // or use WireLimiter to limit access to certain services only
  *
  *   // an identifier may be a string key or a class name, depending on your container implementation
- *   $invokableProvider = $genie->provide( ...dependency-identifier-list... );
+ *   $invoker = $genie->provide( ...dependency-identifier-list... );
  *
- *   $service = $invokableProvider->invoke($factoryFunction); // then invoke the factory like this,
- *   $service = $invokableProvider($factoryFunction);         // or like this
+ *   $service = $invoker->invoke($factoryFunction); // then invoke the factory like this,
+ *   $service = $invoker($factoryFunction);         // or like this
  *
  * @author Andrej Rypák (dakujem) <xrypak@gmail.com>
  */
@@ -39,14 +39,14 @@ final class WireGenie
     }
 
     /**
-     * Resolves given dependencies using the container and returns a callable provider.
-     * The provider can be used to invoke other callables with the resolved dependencies.
+     * Resolves given dependencies using the container and returns an invoker.
+     * The invoker can be used to invoke other callables with the resolved dependencies.
      *
-     * When the container does not have a dependency, it is resolved to null instead.
+     * When a dependency is not present in the container, it is resolved to null instead.
      * Alternatively, you can use `provideStrict` or `provideSafe` for different behaviour.
      *
      * @param mixed ...$dependencies list of identifiers for the container
-     * @return InvokableProvider
+     * @return InvokableProvider callable
      */
     public function provide(...$dependencies): callable
     {
@@ -61,7 +61,7 @@ final class WireGenie
      * Same as `provide`, except an exception is thrown when the container can not or will not resolve a dependency.
      *
      * @param mixed ...$dependencies list of identifiers for the container
-     * @return InvokableProvider
+     * @return InvokableProvider callable
      */
     public function provideStrict(...$dependencies): callable
     {
@@ -77,7 +77,7 @@ final class WireGenie
      * Dependencies that can not or will not be resolved by the container are resolved to null.
      *
      * @param mixed ...$dependencies list of identifiers for the container
-     * @return InvokableProvider
+     * @return InvokableProvider callable
      */
     public function provideSafe(...$dependencies): callable
     {
@@ -90,5 +90,17 @@ final class WireGenie
         }, $dependencies);
 
         return new InvokableProvider(...$resolved);
+    }
+
+    /**
+     * Exposes the internal container to a callable.
+     * A public getter for the container instance is not provided by design.
+     *
+     * @param callable $worker function(ContainerInterface $container)
+     * @return mixed forwards the return value of the callable
+     */
+    public function exposeContainer(callable $worker)
+    {
+        return call_user_func($worker, $this->container, $this);
     }
 }

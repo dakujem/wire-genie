@@ -3,10 +3,12 @@
 namespace Dakujem\Tests;
 
 use Dakujem\InvokableProvider;
+use Dakujem\Invoker;
 use Dakujem\WireGenie;
 use Dakujem\WireLimiter;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
 /**
@@ -79,7 +81,7 @@ final class WireGenieTest extends TestCase
         $wg = new WireGenie($sleeve);
 
         $this->expectException(NotFoundExceptionInterface::class);
-        $p = $wg->provideStrict('unknown', 'genie');  // this would NOT have thrown if using `provide`
+        $wg->provideStrict('unknown', 'genie');  // this would NOT have thrown if using `provide`
     }
 
     public function testSafeNullResolution()
@@ -97,15 +99,30 @@ final class WireGenieTest extends TestCase
         $wg = new WireGenie(new WireLimiter($sleeve, [])); // will throw when accessing any service
 
         $this->expectException(ContainerExceptionInterface::class);
-        $p = $wg->provide('self');
+        $wg->provide('self');
     }
 
-    private function check(array $expected, InvokableProvider $p)
+    public function testContainerExposing()
     {
-        $provided = null;
-        call_user_func($p, function (...$args) use (&$provided) {
-            $provided = $args;
+        $sleeve = ContainerProvider::createContainer();
+        $wg = new WireGenie($sleeve);
+
+        $container = $wg->exposeContainer(function (ContainerInterface $container) {
+            return $container;
         });
-        $this->assertSame($expected, $provided);
+        $this->assertSame($sleeve, $container);
+
+        // test that the call actually returns the value returned by the callable
+        $rv = $wg->exposeContainer(function () {
+            return 42;
+        });
+        $this->assertSame(42, $rv);
+    }
+
+    private function check(array $expected, Invoker $p)
+    {
+        $this->assertSame($expected, $p->invoke(function (...$args) {
+            return $args;
+        }));
     }
 }
