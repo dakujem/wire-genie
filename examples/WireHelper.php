@@ -4,6 +4,7 @@ namespace Dakujem\Examples;
 
 use Dakujem\ArgInspector;
 use Dakujem\WireGenie;
+use Dakujem\WireInvoker;
 
 /**
  * An example of a helper class that allows for simple automatic dependency injection for callables.
@@ -36,9 +37,17 @@ final class WireHelper
      */
     public function wiredCall(callable $code, ...$staticArguments)
     {
-        return
-            $this->genie
-                ->employ(ArgInspector::resolver(ArgInspector::tagReader()), ...$staticArguments)
-                ->invoke($code);
+        return WireInvoker::employ(
+            $this->genie,
+            ArgInspector::typeDetector(ArgInspector::tagReader())
+        )->invoke($code, ...$staticArguments);
+    }
+
+    public function wiredConstruct(string $className, ...$staticArguments)
+    {
+        return WireInvoker::employ(
+            $this->genie,
+            ArgInspector::typeDetector(ArgInspector::tagReader())
+        )->construct($className, ...$staticArguments);
     }
 }

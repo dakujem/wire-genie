@@ -31,7 +31,7 @@ and to help wire services automatically.
 
 ## How it works
 
-`WireGenie` is rather simple,
+[`WireGenie`](src/WireGenie.php) is rather simple,
 it fetches specified dependencies from a container
 and passes them to a callable, invoking it and returning the result.
 
@@ -50,7 +50,7 @@ $provider = $wireGenie->provide( Dependency::class, OtherDependency::class, ... 
 $service = $provider->invoke($factory);
 ```
 
-With `WireInvoker` it is even possible to omit declaring the dependencies:
+With [`WireInvoker`](src/WireInvoker.php) it is even possible to omit declaring the dependencies:
 
 ```php
 // invoke the factory without specifying dependencies, using an automatic provider
@@ -61,10 +61,42 @@ $service = WireInvoker::employ($wireGenie)->invoke($factory);
 ### Note on service containers and conventions
 
 Note that _how_ services in the container are accessed depends on the conventions used.\
-Services might be accessed by plain string keys, class names or interface names.\
-Wire Genie simply calls PSR-11's `ContainerInterface::get()` and `ContainerInterface::has()` under the hood,
-there is no other "magic".\
-In the example above, services are accessed using their class names.
+Services might be accessed by plain string keys, class names or interface names.
+
+Wire Genie simply calls methods of [PSR-11 Container](https://www.php-fig.org/psr/psr-11/)
+`ContainerInterface::get()` and `ContainerInterface::has()` under the hood,
+there is no other "magic".
+
+Consider a service container ([Sleeve](https://github.com/dakujem/sleeve)) and the different conventions:
+```php
+$sleeve = new Sleeve();
+// using a plain string identifier
+$sleeve->set('genie', function (Sleeve $container) {
+    return new WireGenie($container);
+});
+// using a class name identifier
+$sleeve->set(WireGenie::class, function (Sleeve $container) {
+    return new WireGenie($container);
+});
+
+// using a plain string identifier
+$sleeve->set('self', $sleeve);
+// using an interface name identifier
+$sleeve->set(ContainerInterface::class, $sleeve);
+```
+
+The services can be accessed by calling either
+```php
+$sleeve->get('genie');
+$sleeve->get(WireGenie::class);
+
+$sleeve->get('self');
+$sleeve->get(ContainerInterface::class);
+```
+
+Different service containers expose services differently.
+Some offer both conventions, some offer only one.\
+It is important to understand how _your_ container exposes the services to fully leverage `WireGenie` and `WireInvoker`.
 
 
 ## Usage
@@ -76,7 +108,7 @@ In the example above, services are accessed using their class names.
 $container = AppContainerPopulator::populate(new Sleeve());
 
 // Give Wire Genie full access to your service container,
-$genie = new WireGenie($container);
+$genie = new WireGenie($serviceContainer);
 
 // or give it access to limited services only.
 // (classes implementing RepositoryInterface in this example)
@@ -119,10 +151,7 @@ $repoGenie->provide(
     // do stuff with the repos...
 });
 ```
-> ✳ the actual keys depend on the container in use
-> and the way the services are accessed.\
-> These identifiers are bare strings without their own semantics.
-> They may or may not be related to the actual instances that are fetched from the container.
+> ✳ the actual keys depend on the conventions of exposing services by the container.
 
 In use cases like the one above, it is important to limit access
 to certain services only, to keep your app layers in good shape.
@@ -130,22 +159,22 @@ to certain services only, to keep your app layers in good shape.
 
 ## Automatic dependency resolution
 
-🚧 OUTDATED section ❗
+If you find the explicit way of `WireGenie` too verbose or insufficient,
+Wire Genie package also comes with a `WireInvoker` class
+that enables automatic resolution of callable arguments.
 
-Wire Genie package also comes with a helper class that enables automatic resolution of callable arguments.
-
-If you find the explicit way too verbose, it is possible to omit defining the arguments, provided the arguments can be resolved using reflection:
+It is then possible to omit explicitly specifying the dependencies:
 ```php
-$genie->employ(ArgInspector::resolver())->invoke(function( Dependency $dep1, OtherDependency $dep2 ){
+WireInvoker::employ($wireGenie)->invoke(function( Dependency $dep1, OtherDependency $dep2 ){
    return new Service($dep1, $dep2);
 });
 ```
 
-The resolver will make sure that `Dependency::class` and `OtherDependency::class`
+The automatic resolver will make sure that `Dependency::class` and `OtherDependency::class`
 are fetched from the container,
 provided the services are accessible using their class names.
 
-In case services are accessed by plain string identifiers, doc-comments and "tags" can be used:
+In case services are accessible by plain string identifiers, doc-comments and "tags" can be used:
 ```php
 /**
  * @param $dep1 [wire:my-identifier]
@@ -159,11 +188,17 @@ In case services are accessed by plain string identifiers, doc-comments and "tag
 $factory = function( Dependency $dep1, OtherDependency $dep2 ){
   return new Service($dep1, $dep2);
 };
-$genie->employ(ArgInspector::resolver(ArgInspector::tagReader()))->invoke($factory);
+// note that we are using a custom detector with tag reader this time:
+WireInvoker::employ($wireGenie, ArgInspector::typeDetector(ArgInspector::tagReader()))->invoke($factory);
 ```
 In this case, services registered as `my-identifier` and `other-identifier` are fetched from the container.
 
-You might consider implementing an invoker helper class with a method like the following:
+Note that `WireInvoker` resolves the dependencies at the moment of calling its `invoke`/`construct` methods, once per each call.\
+This is contrary to `WireGenie::provide*()` methods,
+that resolve the dependencies at the moment of their call and only once,
+regardless of how many callables are invoked by the provider returned by the methods.
+
+You might consider implementing an invoker helper class with a method like the following (see [`WireHelper`](examples/WireHelper.php) for full example):
 ```php
 /**
  * Invokes a callable resolving its type-hinted arguments,
@@ -171,12 +206,12 @@ You might consider implementing an invoker helper class with a method like the f
  * Returns the callable's return value.
  * Using "wire" tags is enabled.
  */ 
-public function wiredCall(callable $code, ...$staticDependencies)
+public function wiredCall(callable $code, ...$staticArguments)
 {
-    return $this->wireGenie->employ(
-        ArgInspector::resolver(ArgInspector::tagReader()),
-        ...$staticDependencies
-    )->invoke($code);
+    return WireInvoker::employ(
+        $this->wireGenie,
+        ArgInspector::typeDetector(ArgInspector::tagReader())
+    )->invoke($code, ...$staticArguments);
 }
 ```
 
@@ -193,34 +228,25 @@ Automatic argument resolution is useful for:
 
 ## Advanced
 
-### Implementing custom logic around `WireGenie`'s core
+### Implementing custom logic around `WireInvoker`'s core
 
-🚧 OUTDATED section ❗
-
-`WireGenie::expose()` method enables implementing custom resolution of dependencies
-and a custom way of fetching the services from your service container.
+It is possible to configure every aspect of `WireInvoker`.\
+Pass callables to its constructor to configure
+how services are wired to invoked callables or created instances.
 
 For exmaple, if every service was accessed by its class name,
 except the backslashes `\` were replaced by dots '.' and in lower case,
 you could implement the following to invoke `$target` callable:
 ```php
-$resolver = function(array $deps, Container $container, callable $target): array {
-    return array_map(function($dep) use ($container) {
-        $key = str_replace('\\', '.', strtolower($dep)); // alter the service key
-        return $container->has($key) ? $container->get($key) : null;
-    }, $deps);
+$proxy = function(string $identifier, ContainerInterface $container) {
+    $key = str_replace('\\', '.', strtolower($identifier)); // alter the service key
+    return $container->has($key) ? $container->get($key) : null;
 };
-$genie->employ($resolver, My\Name\Space\Service::class, My\Name\Space\Foo::class)->invoke($target);
+new WireInvoker(null, $proxy); // using custom proxy
 ```
 
-Note that `WireGenie::employ()` method does not resolve the dependencies at the moment of its call,
-but at the moment of the callable invokation, once per each invokation.\
-This is contrary to `WireGenie::provide*()` methods,
-that resolve the dependencies at the moment of their call and only once,
-regardless of how many callables are invoked by the provider returned.
 
-
-### Example pseudocode
+### Example pseudocode for `WireGenie`
 
 An example with in-depth code comments:
 ```php
@@ -260,6 +286,8 @@ $genie->provide( ... )->invoke($factoryFunction);
 $genie->provide( ... )(function( ... ){ ... });
 $genie->provide( ... )->invoke(function( ... ){ ... });
 ```
+
+The shorthand syntax may also be used with `WireInvoker`, which itself is _callable_.
 
 
 ## Contributing
