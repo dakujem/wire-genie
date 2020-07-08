@@ -93,7 +93,17 @@ final class ArgInspector
         return array_merge(array_values($services), array_values($staticArguments));
     }
 
-    public static function detector(?callable $paramDetector = null): callable
+    /**
+     * Returns a reflection-based detector that detects parameter types.
+     * Optionally may use other detection for individual parameters, like "wire tag" detection.
+     *
+     * Usage:
+     *  new WireInvoker($container, ArgInspector::typeDetector(ArgInspector::tagReader()))
+     *
+     * @param callable|null $paramDetector optional detector used for individual parameters
+     * @return callable
+     */
+    public static function typeDetector(?callable $paramDetector = null): callable
     {
         return function (FunctionRef $reflection) use ($paramDetector): array {
             return static::detectTypes($reflection, $paramDetector);
@@ -101,39 +111,36 @@ final class ArgInspector
     }
 
     /**
-     * Returns an array of type-hinted argument class names by default.
-     *
-     * If a custom $detector is passed, it is used for each of the parameters instead.
+     * Returns a reflection-based detector that only detects "wire tags".
      *
      * Usage:
-     *  $types = ArgInspector::types(new ReflectionFunction($func));
-     *  $types = ArgInspector::types(new ReflectionMethod($object, $methodName));
-     *  $types = ArgInspector::types(new ReflectionMethod('Namespace\Object::method'));
+     *  new WireInvoker($container, ArgInspector::tagDetector())
      *
-     * @param FunctionRef $reflection
-     * @param callable|null $paramDetector called for each parameter, if provided
-     * @return string[] the array may contain null values
+     * @param string $tag defaults to "wire"; only alphanumeric characters should be used; case insensitive
+     * @return callable
      */
-    public static function detectTypes(FunctionRef $reflection, ?callable $paramDetector = null): array
+    public static function tagDetector(string $tag = null): callable
     {
-        return array_map(function (ParamRef $parameter) use ($reflection, $paramDetector): ?string {
-            return $paramDetector !== null ?
-                call_user_func($paramDetector, $parameter, $reflection) :
-                static::typeHintOf($parameter);
-        }, $reflection->getParameters());
+        return static::typeDetector(static::tagReader($tag, false));
     }
 
     /**
      * Returns a callable to be used as $detector argument to the `ArgInspector::detectTypes()` call.
      * @see ArgInspector::detectTypes()
      *
-     * The callable will collect "tags" of parameter annotations, `@ param`.
-     * If no tag is present, it will return type-hinted class name.
-     * The tag is in the following form, where `<identifier>` is replaced by the actual service identifier:
-     *  [wire:<identifier>]
-     * By default the tag looks like the following:
-     *  @.param Foobar $foo description [wire:my_service_identifier]
+     * The callable will collect "wire tags" of parameter annotations, `@ param`.
+     * If no tag is present, it will return type-hinted class name by default.
      *
+     * A "wire tag" is in the following form, where `<identifier>` is replaced by the actual service identifier:
+     *  [wire:<identifier>]
+     * By default a "wire tag" looks like the following:
+     *  @.param Foobar $foo description [wire:my_service_identifier]
+     *                                  \__________________________/
+     *                                      the whole wire tag
+     *
+     *  @.param Foobar $foo description [wire:my_service_identifier]
+     *                                        \___________________/
+     *                                          service identifier
      * Usage:
      *  $types = ArgInspector::detectTypes(new ReflectionFunction($func), ArgInspector::tagReader());
      *
@@ -168,6 +175,29 @@ final class ArgInspector
             }
             return $annotations[$param->getName()] ?? ($defaultToTypeHint ? static::typeHintOf($param) : null);
         };
+    }
+
+    /**
+     * Returns an array of type-hinted argument class names by default.
+     *
+     * If a custom $detector is passed, it is used for each of the parameters instead.
+     *
+     * Usage:
+     *  $types = ArgInspector::types(new ReflectionFunction($func));
+     *  $types = ArgInspector::types(new ReflectionMethod($object, $methodName));
+     *  $types = ArgInspector::types(new ReflectionMethod('Namespace\Object::method'));
+     *
+     * @param FunctionRef $reflection
+     * @param callable|null $paramDetector called for each parameter, if provided
+     * @return string[] the array may contain null values
+     */
+    public static function detectTypes(FunctionRef $reflection, ?callable $paramDetector = null): array
+    {
+        return array_map(function (ParamRef $parameter) use ($reflection, $paramDetector): ?string {
+            return $paramDetector !== null ?
+                call_user_func($paramDetector, $parameter, $reflection) :
+                static::typeHintOf($parameter);
+        }, $reflection->getParameters());
     }
 
     public static function reflectionOf($target): FunctionRef
