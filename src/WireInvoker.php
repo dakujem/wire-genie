@@ -19,11 +19,22 @@ final class WireInvoker implements Invoker, Constructor
 {
     use PredictableAccess;
 
-    /** @var callable */
+    /**
+     * A callable that allows to customize the way service identifiers are detected.
+     * @var callable function(ReflectionFunctionAbstract $reflection): string[]
+     */
     private $detector;
-    /** @var callable */
+
+    /**
+     * A callable that allows to customize the way services are fetched from a container.
+     * @var callable function(string $identifier, ContainerInterface $container): service
+     */
     private $serviceProvider;
-    /** @var callable */
+
+    /**
+     * A callable that allows to customize the way a function reflection is acquired.
+     * @var callable function($target): FunctionReflectionAbstract
+     */
     private $reflector;
 
     /**
@@ -32,14 +43,18 @@ final class WireInvoker implements Invoker, Constructor
      * Detector, reflector and service proxy work as a pipeline to provide a service for a target's parameter:
      *      $service = $serviceProvider( $detector( $reflector( $target ) ) )
      *
+     * In theory, the whole pipeline can be altered not to work with reflections,
+     * there are no restriction to return types of the three callables, except for the detector.
+     *
      * @param ContainerInterface $container service container
      * @param callable|null $detector a callable used for identifier detection;
-     *                                takes the result of $reflector, returns an array of service identifiers;
+     *                                takes the result of $reflector, MUST return an array of service identifiers;
      *                                function(ReflectionFunctionAbstract $reflection): string[]
      * @param callable|null $serviceProxy a callable that takes a service identifier and a container instance
-     *                                    and returns the requested service;
+     *                                    and SHOULD return the requested service;
      *                                    function(string $identifier, ContainerInterface $container): service
      * @param callable|null $reflector a callable used to get the reflection of the target being invoked or constructed;
+     *                                 SHOULD return a reflection of the function or constructor that will be invoked;
      *                                 function($target): FunctionReflectionAbstract
      */
     public function __construct(
@@ -68,16 +83,16 @@ final class WireInvoker implements Invoker, Constructor
      * @param callable|null $reflector
      * @return static
      */
-    public static function consume(
+    public static function employ(
         WireGenie $wireGenie,
         ?callable $detector = null,
         ?callable $serviceProxy = null,
         ?callable $reflector = null
     ): self {
-        $f = function (ContainerInterface $container) use ($detector, $serviceProxy, $reflector) {
+        $worker = function (ContainerInterface $container) use ($detector, $serviceProxy, $reflector) {
             return new static($container);
         };
-        return $wireGenie->exposeTo($f);
+        return $wireGenie->exposeContainer($worker);
     }
 
     /**
@@ -108,6 +123,20 @@ final class WireInvoker implements Invoker, Constructor
     {
         $args = $this->resolveArguments($target, ...$staticArguments);
         return new $target(...$args);
+    }
+
+    /**
+     * This provider instances are also callable.
+     *
+     * @param callable|string $target callable to be invoked or a name of a class to be constructed.
+     * @param mixed ...$staticArguments static argument pool
+     * @return mixed result of the $target callable invocation or an instance of the requested class
+     */
+    public function __invoke($target, ...$staticArguments)
+    {
+        return is_string($target) && class_exists($target) ?
+            $this->construct($target, ...$staticArguments) :
+            $this->invoke($target, ...$staticArguments);
     }
 
     /**

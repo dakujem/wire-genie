@@ -5,8 +5,10 @@
 
 > 💿 `composer require dakujem/wire-genie`
 
-Allows to fetch multiple dependencies from a DI container
-and provide them as arguments to callables.
+Allows to fetch multiple dependencies from a service container
+and provide them as arguments to callables.\
+Also allows to automatically detect parameter types and wire respective
+dependencies to invoke callables or construct class instances.
 
 > Disclaimer 🤚
 >
@@ -15,18 +17,27 @@ and provide them as arguments to callables.
 > so use the package with caution.
 
 
-The main purpose of the package is to provide limited means of wiring services
-without exposing the service container itself.
+The main purposes of the package are to provide a limited means of wiring services
+without directly exposing a service container,
+and to help wire services automatically.
 
-Automatic dependency injection can be achieved, if configured properly.
+> 💡
+>
+> This approach solves an edge case in certain implementations where dependency injection
+> boilerplate can not be avoided or reduced in a different way.
+>
+> Normally you want to wire your dependencies when building your app's service container.
 
 
 ## How it works
 
-Wire genie fetches specified dependencies from a container
+`WireGenie` is rather simple,
+it fetches specified dependencies from a container
 and passes them to a callable, invoking it and returning the result.
 
 ```php
+$wireGenie = new WireGenie($container);
+
 $factory = function( Dependency $dep1, OtherDependency $dep2, ... ){
     // create stuff...
     return new Service($dep1, $dep2, ... );
@@ -38,6 +49,16 @@ $provider = $wireGenie->provide( Dependency::class, OtherDependency::class, ... 
 // invoke the factory using the provider
 $service = $provider->invoke($factory);
 ```
+
+With `WireInvoker` it is even possible to omit declaring the dependencies:
+
+```php
+// invoke the factory without specifying dependencies, using an automatic provider
+$service = WireInvoker::employ($wireGenie)->invoke($factory);
+```
+
+
+### Note on service containers and conventions
 
 Note that _how_ services in the container are accessed depends on the conventions used.\
 Services might be accessed by plain string keys, class names or interface names.\
@@ -54,7 +75,7 @@ In the example above, services are accessed using their class names.
 // Use any PSR-11 compatible container you like.
 $container = AppContainerPopulator::populate(new Sleeve());
 
-// Give Wire Genie full access to your DI container,
+// Give Wire Genie full access to your service container,
 $genie = new WireGenie($container);
 
 // or give it access to limited services only.
@@ -80,15 +101,8 @@ $complexService = $genie->provide('myService', 'my-other-service')->invoke($fact
 $repoGenie->provide('my-system-service');
 ```
 
-> 💡
->
-> This approach solves an edge case in certain implementations where dependency injection
-> boilerplate can not be avoided or reduced in a different way.
->
-> Normally you want to wire your dependencies when building your app's DI container.
-
 You now have means to allow a service
-on-demand access to services of a certain type without injecting them all.\
+on-demand access to other services of a certain type without injecting them all.\
 This particular use-case breaks IoC if misused, though.
 ```php
 // using $repoGenie from the previous snippet
@@ -115,6 +129,8 @@ to certain services only, to keep your app layers in good shape.
 
 
 ## Automatic dependency resolution
+
+🚧 OUTDATED section ❗
 
 Wire Genie package also comes with a helper class that enables automatic resolution of callable arguments.
 
@@ -179,7 +195,9 @@ Automatic argument resolution is useful for:
 
 ### Implementing custom logic around `WireGenie`'s core
 
-`WireGenie::employ()` method enables implementing custom resolution of dependencies
+🚧 OUTDATED section ❗
+
+`WireGenie::expose()` method enables implementing custom resolution of dependencies
 and a custom way of fetching the services from your service container.
 
 For exmaple, if every service was accessed by its class name,
@@ -212,7 +230,7 @@ $factoryFunction = function( /*...dependencies...*/ ){
     return new Service( /*...dependencies...*/ );
 };
 
-// Give access to full DI container
+// Give access to full service container
 // or use WireLimiter to limit access to certain services only.
 $genie = new WireGenie( $serviceContainer );
 
@@ -231,7 +249,7 @@ $service = $invokableProvider($factoryFunction);
 ### Shorthand syntax
 
 As hinted in the example above,
-the instances returned by `WireGenie`'s methods are _callable_ themselves,
+the provider instances returned by `WireGenie`'s methods are _callable_ themselves,
 the following syntax may be used:
 ```php
 // the two lines below are equivalent

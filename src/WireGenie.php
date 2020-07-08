@@ -93,45 +93,14 @@ final class WireGenie
     }
 
     /**
-     * Employing a resolver, returns an invoker that can be used to invoke callables.
-     * Invocation arguments are resolved using the resolver for each invocation at the moment of invocation,
-     * as opposed to the `provide*` methods.
-     *
-     * The resolver is passed the $dependencies as the first argument, container of the WireGenie instance
-     * and the callable being invoked.
-     *
-     * Example: A basic resolver that mimics the `WireGenie::provide` method might look like the following:
-     *  function(array $deps, $container): array {
-     *      return array_map(function($dep) use ($container) {
-     *          return $container->has($dep) ? $container->get($dep) : null;
-     *      }, $deps);
-     *  }
-     *
-     * @param callable $resolver a resolver that returns an array of invocation arguments;
-     *                           signature function(array $dependencies, ContainerInterface $c, callable $target): array
-     * @param mixed ...$dependencies list of identifiers for the container; or any other arguments usable by the resolver
-     * @return DormantProvider callable
-     */
-    public function employ(callable $resolver, ...$dependencies): callable
-    {
-        $deferredResolver = function (callable $target, iterable $staticArgs = []) use ($resolver, $dependencies) {
-            // The resolver will be called to resolve the arguments.
-            // The dependencies, a container and the target will be passed to the call,
-            // which allows for advanced techniques to be implemented in uniform manner.
-            return call_user_func($resolver, $dependencies, $this->container, $target, $staticArgs);
-        };
-        return new DormantProvider($deferredResolver);
-    }
-
-    /**
      * Exposes the internal container to a callable.
      * A public getter for the container instance is not provided by design.
      *
-     * @param callable $operator function(ContainerInterface $container)
+     * @param callable $worker function(ContainerInterface $container)
      * @return mixed forwards the return value of the callable
      */
-    public function exposeTo(callable $operator)
+    public function exposeContainer(callable $worker)
     {
-        return call_user_func($operator, $this->container, $this);
+        return call_user_func($worker, $this->container, $this);
     }
 }

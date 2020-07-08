@@ -41,6 +41,9 @@ class ContainerProvider
         $sleeve->set(Bar::class, function () {
             return new Bar;
         });
+        $sleeve->set(Baz::class, function () {
+            return new Baz;
+        });
 
         return $sleeve;
     }
@@ -52,4 +55,42 @@ class Foo
 
 class Bar
 {
+}
+
+class Baz extends Bar
+{
+}
+
+class NoConstructor
+{
+}
+
+class HasConstructor
+{
+    public function __construct()
+    {
+    }
+}
+
+class InheritsConstructor extends HasConstructor
+{
+
+}
+
+class WeepingWillow
+{
+    public $args;
+
+    public function __construct(...$args)
+    {
+        $this->args = $args;
+    }
+}
+
+class HollowWillow extends WeepingWillow
+{
+    public function __construct(Foo $foo)
+    {
+        parent::__construct($foo);
+    }
 }

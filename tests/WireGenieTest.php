@@ -8,6 +8,7 @@ use Dakujem\WireGenie;
 use Dakujem\WireLimiter;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
 /**
@@ -101,41 +102,21 @@ final class WireGenieTest extends TestCase
         $wg->provide('self');
     }
 
-    public function testCustomResolver()
+    public function testContainerExposing()
     {
         $sleeve = ContainerProvider::createContainer();
         $wg = new WireGenie($sleeve);
 
-        $p = $wg->employ(function () {
-            return [];
+        $container = $wg->exposeTo(function (ContainerInterface $container) {
+            return $container;
         });
-        $this->check([], $p);
-        $p = $wg->employ(function () {
-            return [1, 2, 3, 42, 'foo'];
+        $this->assertSame($sleeve, $container);
+
+        // test that the call actually returns the value returned by the callable
+        $rv = $wg->exposeTo(function () {
+            return 42;
         });
-        $this->check([1, 2, 3, 42, 'foo'], $p);
-    }
-
-    public function testCustomResolverIsPassedCorrectArguments()
-    {
-        $sleeve = ContainerProvider::createContainer();
-        $wg = new WireGenie($sleeve);
-
-        $p = $wg->employ(function ($deps, $container) use ($sleeve) {
-            $this->assertSame([1, 2, 3, 42, 'foo'], $deps);
-            $this->assertSame($sleeve, $container);
-            return [];
-        }, 1, 2, 3, 42, 'foo');
-        $this->check([], $p);
-
-        $checkFunc = function () {
-        };
-        $wg->employ(function ($dependencies, $container, $target) use ($sleeve, $checkFunc) {
-            $this->assertSame([], $dependencies); //   the rest arguments to the `employ` call are treated as dependencies
-            $this->assertSame($sleeve, $container); // second argument is the container of wire genie
-            $this->assertSame($checkFunc, $target); // the last argument to the resolver is the target function
-            return [];
-        })->invoke($checkFunc);
+        $this->assertSame(42, $rv);
     }
 
     private function check(array $expected, Invoker $p)

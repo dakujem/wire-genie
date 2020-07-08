@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Dakujem;
 
 /**
- * A provider returned by WireGenie::provide method(s).
+ * A static provider returned by WireGenie::provide method(s).
  * The instances are _callable_.
  *
  * All the call arguments will have been resolved at the moment of creating the instance.

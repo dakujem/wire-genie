@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Dakujem;
 
 use Closure;
-use Psr\Container\ContainerInterface;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionFunction;
@@ -24,76 +23,6 @@ use ReflectionParameter as ParamRef;
 final class ArgInspector
 {
     /**
-     * This resolver will try to automatically detect type-hinted class names of parameters.
-     * A custom detector may be used instead. For parameters where no type is detected,
-     * it will try to fill in _values_ one by one as passed to the `WireGenie::employ($res, ...$staticArguments)` call.
-     *
-     * Usage:
-     *  $wireGenie->employ(ArgInspector::resolver())->invoke($func)
-     *  $wireGenie->employ(ArgInspector::resolver(ArgInspector::tagReader()))->invoke($func)
-     *  $wireGenie->employ(ArgInspector::resolver())->invoke($func, 42, 'foobar')
-     *
-     * @param callable|null $detector called for every parameter, if present
-     * @param callable|null $serviceFetcher fetches a service from a service container
-     * @return callable
-     */
-    public static function resolver(?callable $detector = null, ?callable $serviceFetcher = null): callable
-    {
-        return function (
-            array $staticDependencies, // TODO
-            ContainerInterface $container,
-            callable $target,
-            array $staticArguments
-        ) use ($detector, $serviceFetcher): array {
-            $identifiers = static::detectTypes(static::reflectionOfCallable($target), $detector);
-            if (count($identifiers) > 0) {
-                $serviceProvider = $serviceFetcher === null ? function ($id) use ($container) {
-                    return $container->has($id) ? $container->get($id) : null;
-                } : function ($id) use ($container, $serviceFetcher) {
-                    return call_user_func($serviceFetcher, $id, $container);
-                };
-                return static::resolveServicesFillingInStaticArguments($identifiers, $serviceProvider, $staticArguments);
-            }
-            return $staticArguments;
-        };
-    }
-
-    /**
-     * A helper method.
-     * For each service identifier calls the service provider.
-     * If the identifier is `null`, it uses the static arguments instead.
-     *
-     * The resulting array might be a mix of services fetched from the service container via the provider
-     * and other values passed in as static arguments.
-     *
-     * @param array $identifiers
-     * @param callable $serviceProvider
-     * @param array $staticArguments
-     * @return array
-     */
-    public static function resolveServicesFillingInStaticArguments(
-        array $identifiers,
-        callable $serviceProvider,
-        array $staticArguments
-    ): array {
-        $services = [];
-        if (count($identifiers) > 0) {
-            $services = array_map(function ($id) use ($serviceProvider, &$staticArguments) {
-                if ($id !== null) {
-                    return call_user_func($serviceProvider, $id);
-                }
-                if (count($staticArguments) > 0) {
-                    return array_shift($staticArguments);
-                }
-                // when no static argument is present for an identifier, return null
-                return null;
-            }, $identifiers);
-        }
-        // merge with the rest of the static arguments
-        return array_merge(array_values($services), array_values($staticArguments));
-    }
-
-    /**
      * Returns a reflection-based detector that detects parameter types.
      * Optionally may use other detection for individual parameters, like "wire tag" detection.
      *
@@ -105,8 +34,8 @@ final class ArgInspector
      */
     public static function typeDetector(?callable $paramDetector = null): callable
     {
-        return function (FunctionRef $reflection) use ($paramDetector): array {
-            return static::detectTypes($reflection, $paramDetector);
+        return function (?FunctionRef $reflection) use ($paramDetector): array {
+            return $reflection !== null ? static::detectTypes($reflection, $paramDetector) : [];
         };
     }
 
@@ -165,7 +94,7 @@ final class ArgInspector
                     // modifiers: m - multiline; i - case insensitive
                     $regexp = '#@param\W+(.*?\W+)?\$([a-z0-9_]+)(.+?\[' . ($tag ?? 'wire') . ':(.+?)\])?.*?$#mi';
                     //                             $\__________/                               \___/
-                    //                           [2] parameter name                    [4] "wire" tag's value
+                    //                           [2] parameter name                    [4] service identifier
                     preg_match_all($regexp, $dc, $m);
                     foreach ($m[2] as $i => $name) {
                         // [param_name => tag_value] map
@@ -189,18 +118,35 @@ final class ArgInspector
      *
      * @param FunctionRef $reflection
      * @param callable|null $paramDetector called for each parameter, if provided
+     * @param bool $removeTrailingNullValues null values at the end of the returned array will be omitted by default
      * @return string[] the array may contain null values
      */
-    public static function detectTypes(FunctionRef $reflection, ?callable $paramDetector = null): array
-    {
-        return array_map(function (ParamRef $parameter) use ($reflection, $paramDetector): ?string {
+    public static function detectTypes(
+        FunctionRef $reflection,
+        ?callable $paramDetector = null,
+        bool $removeTrailingNullValues = true
+    ): array {
+        $types = array_map(function (ParamRef $parameter) use ($reflection, $paramDetector): ?string {
             return $paramDetector !== null ?
                 call_user_func($paramDetector, $parameter, $reflection) :
                 static::typeHintOf($parameter);
         }, $reflection->getParameters());
+
+        // remove trailing null values (helps with variadic parameters and so on)
+        while ($removeTrailingNullValues && count($types) > 0 && end($types) === null) {
+            array_pop($types);
+        }
+        return $types;
     }
 
-    public static function reflectionOf($target): FunctionRef
+    /**
+     * Returns a reflection of a callable or a reflection of a class name (if a constructor is present).
+     *
+     * @param callable|string $target a callable or a class name
+     * @return FunctionRef|null
+     * @throws ReflectionException
+     */
+    public static function reflectionOf($target): ?FunctionRef
     {
         return is_string($target) && class_exists($target) ?
             static::reflectionOfConstructor($target) :
@@ -229,7 +175,15 @@ final class ArgInspector
         return new ReflectionMethod($callable[0], $callable[1]);
     }
 
-    public static function reflectionOfConstructor(string $className): FunctionRef
+    /**
+     * Return a reflection of the constructor of the class for type detection or other uses.
+     * If the class has no constructor, null is returned.
+     *
+     * @param string $className a class name
+     * @return FunctionRef|null
+     * @throws ReflectionException
+     */
+    public static function reflectionOfConstructor(string $className): ?FunctionRef
     {
         return (new ReflectionClass($className))->getConstructor();
     }
