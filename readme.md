@@ -5,17 +5,17 @@
 
 > 💿 `composer require dakujem/wire-genie`
 
-Allows to fetch multiple dependencies from a service container
-and provide them as arguments to callables.\
-Also allows to automatically detect parameter types and wire respective
-dependencies to invoke callables or construct class instances.
+Allows to easily
+- fetch multiple dependencies from a service container
+and provide them as arguments to _callables_
+- automatically detect parameter types of a _callable_ and wire respective dependencies to invoke it
+- automatically detect _constructor_ parameters of a _class_ and wire respective dependencies to construct it
 
 > Disclaimer 🤚
 >
 > Improper use of this package might break established IoC principles
 > and degrade your dependency injection container to a service locator,
 > so use the package with caution.
-
 
 The main purposes of the package are to provide a limited means of wiring services
 without directly exposing a service container,
@@ -50,12 +50,15 @@ $provider = $wireGenie->provide( Dependency::class, OtherDependency::class, ... 
 $service = $provider->invoke($factory);
 ```
 
-With [`WireInvoker`](src/WireInvoker.php) it is even possible to omit declaring the dependencies:
-
+With [`WireInvoker`](src/WireInvoker.php) it is possible to omit specifying
+the dependencies and use **automatic dependency wiring**:
 ```php
 // invoke the factory without specifying dependencies, using an automatic provider
 $service = WireInvoker::employ($wireGenie)->invoke($factory);
 ```
+
+`WireInvoker` will detect type-hinted parameter types or tag-hinted identifiers
+at runtime and then provide dependencies to the callable.
 
 
 ### Note on service containers and conventions
@@ -63,11 +66,11 @@ $service = WireInvoker::employ($wireGenie)->invoke($factory);
 Note that _how_ services in the container are accessed depends on the conventions used.\
 Services might be accessed by plain string keys, class names or interface names.
 
-Wire Genie simply calls methods of [PSR-11 Container](https://www.php-fig.org/psr/psr-11/)
+`WireGenie` simply calls methods of [PSR-11 Container](https://www.php-fig.org/psr/psr-11/)
 `ContainerInterface::get()` and `ContainerInterface::has()` under the hood,
 there is no other "magic".
 
-Consider a service container ([Sleeve](https://github.com/dakujem/sleeve)) and the different conventions:
+Consider a basic service container ([Sleeve](https://github.com/dakujem/sleeve)) and the different conventions:
 ```php
 $sleeve = new Sleeve();
 // using a plain string identifier
@@ -160,10 +163,10 @@ to certain services only, to keep your app layers in good shape.
 ## Automatic dependency resolution
 
 If you find the explicit way of `WireGenie` too verbose or insufficient,
-Wire Genie package also comes with a `WireInvoker` class
+Wire Genie package comes with the `WireInvoker` class
 that enables automatic resolution of callable arguments.
 
-It is then possible to omit explicitly specifying the dependencies:
+Using `WireInvoker`, it possible to omit explicitly specifying the dependencies:
 ```php
 WireInvoker::employ($wireGenie)->invoke(function( Dependency $dep1, OtherDependency $dep2 ){
    return new Service($dep1, $dep2);
@@ -174,7 +177,9 @@ The automatic resolver will make sure that `Dependency::class` and `OtherDepende
 are fetched from the container,
 provided the services are accessible using their class names.
 
-In case services are accessible by plain string identifiers, doc-comments and "tags" can be used:
+In case services are accessible by plain string identifiers
+(or other conventions unrelated to the actual type-hinted class names),
+doc-comments and "tags" can be used:
 ```php
 /**
  * @param $dep1 [wire:my-identifier]
@@ -188,8 +193,7 @@ In case services are accessible by plain string identifiers, doc-comments and "t
 $factory = function( Dependency $dep1, OtherDependency $dep2 ){
   return new Service($dep1, $dep2);
 };
-// note that we are using a custom detector with tag reader this time:
-WireInvoker::employ($wireGenie, ArgInspector::typeDetector(ArgInspector::tagReader()))->invoke($factory);
+WireInvoker::employ($wireGenie)->invoke($factory);
 ```
 In this case, services registered as `my-identifier` and `other-identifier` are fetched from the container.
 
@@ -198,22 +202,6 @@ This is contrary to `WireGenie::provide*()` methods,
 that resolve the dependencies at the moment of their call and only once,
 regardless of how many callables are invoked by the provider returned by the methods.
 
-You might consider implementing an invoker helper class with a method like the following (see [`WireHelper`](examples/WireHelper.php) for full example):
-```php
-/**
- * Invokes a callable resolving its type-hinted arguments,
- * filling in the unresolved arguments from the static argument pool.
- * Returns the callable's return value.
- * Using "wire" tags is enabled.
- */ 
-public function wiredCall(callable $code, ...$staticArguments)
-{
-    return WireInvoker::employ(
-        $this->wireGenie,
-        ArgInspector::typeDetector(ArgInspector::tagReader())
-    )->invoke($code, ...$staticArguments);
-}
-```
 
 Automatic argument resolution is useful for:
 - async job execution
@@ -224,6 +212,31 @@ Automatic argument resolution is useful for:
 
 > Note that using reflection might have negative performance impact
 > if used heavily.
+
+
+## Integration
+
+As with many other third-party libraries,
+you should consider wrapping code using Wire Genie into an invoker helper class
+with a method like the following
+(see [`WireHelper`](examples/WireHelper.php) for full example):
+```php
+/**
+ * Invokes a callable resolving its type-hinted arguments,
+ * filling in the unresolved arguments from the static argument pool.
+ * Returns the callable's return value.
+ * Reading "wire" tags is enabled.
+ */ 
+public function wiredCall(callable $code, ...$staticArguments)
+{
+    return WireInvoker::employ(
+        $this->wireGenie
+    )->invoke($code, ...$staticArguments);
+}
+```
+
+This adds a tiny layer for flexibility,
+in case you decide to tweak the way you wire dependencies later on.
 
 
 ## Advanced

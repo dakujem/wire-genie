@@ -107,13 +107,13 @@ final class WireGenieTest extends TestCase
         $sleeve = ContainerProvider::createContainer();
         $wg = new WireGenie($sleeve);
 
-        $container = $wg->exposeTo(function (ContainerInterface $container) {
+        $container = $wg->exposeContainer(function (ContainerInterface $container) {
             return $container;
         });
         $this->assertSame($sleeve, $container);
 
         // test that the call actually returns the value returned by the callable
-        $rv = $wg->exposeTo(function () {
+        $rv = $wg->exposeContainer(function () {
             return 42;
         });
         $this->assertSame(42, $rv);

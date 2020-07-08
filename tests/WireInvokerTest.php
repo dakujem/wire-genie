@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Dakujem\Tests;
 
 use Dakujem\ArgInspector;
+use Dakujem\WireGenie;
 use Dakujem\WireInvoker;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -89,6 +90,13 @@ final class WireInvokerTest extends TestCase
         $this->assertSame([], $invoker->invoke($func2));
         $this->assertSame([42], $invoker->invoke($func2, 42));
         $this->assertSame(['foo'], $invoker->invoke($func2, 'foo'));
+
+        // tags should be read by default
+        $rv = $invoker->invoke([$this, 'methodTagOverride'], 42);
+        $this->assertCount(3, $rv);
+        $this->assertInstanceOf(Baz::class, $rv[0]);
+        $this->assertInstanceOf(WireGenie::class, $rv[1]);
+        $this->assertSame(42, $rv[2]);
     }
 
     public function testConstructor()
@@ -143,7 +151,7 @@ final class WireInvokerTest extends TestCase
         $detectorCalled = 0;
         $detector = function (ReflectionFunctionAbstract $ref) use (&$detectorCalled) {
             $detectorCalled += 1;
-            return ArgInspector::detectTypes($ref);
+            return ArgInspector::detectTypes($ref); // no tag reader
         };
         $proxyCalled = 0;
         $proxy = function ($id, ContainerInterface $container) use (&$proxyCalled) {
