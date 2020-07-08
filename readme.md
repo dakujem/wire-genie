@@ -197,6 +197,27 @@ WireInvoker::employ($wireGenie)->invoke($factory);
 ```
 In this case, services registered as `my-identifier` and `other-identifier` are fetched from the container.
 
+> Note that an empty wire tag `[wire:]` with the colon at the end
+> can be used to indicate that a service should _not_ be wired.
+
+
+### Filling in for unresolved parameters
+
+When a callable requires passing arguments that are not resolved by the service container,
+it is possible to provide them as a static argument pool:
+```php
+// scalars can not be resolved from the container using reflection by default
+$func = function( Dependency $dep1, int $size, OtherDependency $dep2, bool $cool ){
+   return $cool ? new Service($dep1, $dep2) : new OtherService($size, $dep1, $dep2);
+};
+// but there is a tool for that too:
+WireInvoker::employ($wireGenie)->invoke($func, 42, true); // cool, right?
+```
+Values from the static argument pool will be used one by one to fill in for unresolvable parameters.
+
+
+### When to use
+
 Note that `WireInvoker` resolves the dependencies at the moment of calling its `invoke`/`construct` methods, once per each call.\
 This is contrary to `WireGenie::provide*()` methods,
 that resolve the dependencies at the moment of their call and only once,

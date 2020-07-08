@@ -86,23 +86,12 @@ final class ArgInspector
             FunctionRef $reflection
         ) use ($tag, &$annotations, &$reflectionInstance, $defaultToTypeHint): ?string {
             if ($annotations === null || $reflection !== $reflectionInstance) {
-                $dc = $reflection->getDocComment();
-                $annotations = [];
                 $reflectionInstance = $reflection;
-                if ($dc !== false && trim($dc) !== '') {
-                    $m = [];
-                    // modifiers: m - multiline; i - case insensitive
-                    $regexp = '#@param\W+(.*?\W+)?\$([a-z0-9_]+)(.+?\[' . ($tag ?? 'wire') . ':(.+?)\])?.*?$#mi';
-                    //                             $\__________/                               \___/
-                    //                           [2] parameter name                    [4] service identifier
-                    preg_match_all($regexp, $dc, $m);
-                    foreach ($m[2] as $i => $name) {
-                        // [param_name => tag_value] map
-                        $annotations[$name] = $m[3][$i] !== '' ? trim($m[4][$i]) : null; // only when a tag is present
-                    }
-                }
+                $annotations = static::parseWireTags($reflection, $tag);
             }
-            return $annotations[$param->getName()] ?? ($defaultToTypeHint ? static::typeHintOf($param) : null);
+            $annotation = $annotations[$param->getName()] ?? ($defaultToTypeHint ? static::typeHintOf($param) : null);
+            // omit empty annotations - empty wire tag indicates "no wiring"
+            return $annotation !== '' ? $annotation : null;
         };
     }
 
@@ -192,5 +181,27 @@ final class ArgInspector
     {
         $typeHintedClass = $parameter->getClass();
         return $typeHintedClass !== null ? $typeHintedClass->getName() : null;
+    }
+
+    /**
+     * @internal
+     */
+    public static function parseWireTags(FunctionRef $reflection, string $tag = null): array
+    {
+        $annotations = [];
+        $dc = $reflection->getDocComment();
+        if ($dc !== false && trim($dc) !== '') {
+            $m = [];
+            // modifiers: m - multiline; i - case insensitive
+            $regexp = '#@param\W+(.*?\W+)?\$([a-z0-9_]+)(.+?\[' . ($tag ?? 'wire') . ':(.*?)\])?.*?$#mi';
+            //                             $\__________/                               \___/
+            //                           [2] parameter name                    [4] service identifier
+            preg_match_all($regexp, $dc, $m);
+            foreach ($m[2] as $i => $name) {
+                // [param_name => tag_value] map
+                $annotations[$name] = $m[3][$i] !== '' ? trim($m[4][$i]) : null; // only when a tag is present
+            }
+        }
+        return $annotations;
     }
 }

@@ -67,6 +67,21 @@ final class ArgumentInspectorTest extends TestCase
         $this->assertSame([Foo::class, null, 'overridden', \My\Name\Space\Wham::class], $types);
     }
 
+    public function testEmptyWireTagIndicatesNoWiring(): void
+    {
+        /**
+         * @param Foo $foo [wire:]
+         * @param int $qux
+         * @param Bar $bar [wire:]
+         * @param $wham
+         */
+        $closure = function (Foo $foo, int $qux, Bar $bar, $wham) {
+        };
+        $reflection = new ReflectionFunction($closure);
+        $types = ArgInspector::detectTypes($reflection, ArgInspector::tagReader());
+        $this->assertSame([], $types); // trailing null values trimmed, all in this case
+    }
+
     public function testTypeDetector(): void
     {
         $reflection = new ReflectionMethod($this, 'otherMethod');
@@ -117,6 +132,31 @@ final class ArgumentInspectorTest extends TestCase
         $this->assertSame(null, ArgInspector::reflectionOf(NoConstructor::class));
         $this->assertInstanceOf(ReflectionFunctionAbstract::class, ArgInspector::reflectionOf(HasConstructor::class));
         $this->assertInstanceOf(ReflectionFunctionAbstract::class, ArgInspector::reflectionOf(InheritsConstructor::class));
+    }
+
+    public function testTagParsing()
+    {
+        /**
+         * @param $foo [wire:foobar]
+         * @param Barbar $bAr [wire:whatever-it-is-you-like]
+         * @param Foo|Bar|null $qux [wire:1234]
+         * @param this is invalid $wham [wire:Name\Space\Wham]
+         * @param $facepalm [other:tag-prece:ding] [wire:Dakujem\Tests\Foo] [and:another]
+         * @param $empty [wire:]
+         * @param self $notag
+         */
+        $callable = function () {
+        };
+        $annotations = ArgInspector::parseWireTags(ArgInspector::reflectionOfCallable($callable));
+        $this->assertSame([
+            'foo' => 'foobar',
+            'bAr' => 'whatever-it-is-you-like',
+            'qux' => '1234',
+            'wham' => 'Name\Space\Wham',
+            'facepalm' => 'Dakujem\Tests\Foo',
+            'empty' => '',
+            'notag' => null,
+        ], $annotations);
     }
 
     /**
