@@ -13,7 +13,7 @@ use Throwable;
 require_once 'ContainerProvider.php';
 
 /**
- * WireLimiterTest
+ * @internal test
  */
 final class WireLimiterTest extends TestCase
 {

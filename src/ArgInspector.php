@@ -15,8 +15,8 @@ use ReflectionParameter as ParamRef;
 /**
  * Argument Inspector.
  *
- * Allows for reflection-based callable argument type detection.
- * Combined with WireGenie, allows for automatic dependency resolution and injection.
+ * Allows for reflection-based parameter type detection.
+ * Combined with WireInvoker, allows for automatic dependency resolution and injection.
  *
  * @author Andrej Rypák (dakujem) <xrypak@gmail.com>
  */

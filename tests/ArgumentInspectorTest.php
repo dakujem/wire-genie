@@ -12,6 +12,9 @@ use ReflectionMethod;
 
 require_once 'AssertsErrors.php';
 
+/**
+ * @internal test
+ */
 final class ArgumentInspectorTest extends TestCase
 {
     use AssertsErrors;

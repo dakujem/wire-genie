@@ -13,6 +13,9 @@ use ReflectionFunctionAbstract;
 
 require_once 'AssertsErrors.php';
 
+/**
+ * @internal test
+ */
 final class WireInvokerTest extends TestCase
 {
     use AssertsErrors;
@@ -54,7 +57,18 @@ final class WireInvokerTest extends TestCase
         ], $arguments);
     }
 
-    public function testInvoker()
+    public function testInvokerFillsInArguments()
+    {
+        $invoker = new WireInvoker(ContainerProvider::createContainer());
+        $func = function () {
+            return func_get_args();
+        };
+        $this->assertSame([], $invoker->invoke($func));
+        $this->assertSame([42], $invoker->invoke($func, 42));
+        $this->assertSame(['foo'], $invoker->invoke($func, 'foo'));
+    }
+
+    public function testInvokerInvokesAnyCallableTypeAndFillsInUnresolvedArguments()
     {
         $invoker = new WireInvoker(ContainerProvider::createContainer());
 
@@ -83,20 +97,38 @@ final class WireInvokerTest extends TestCase
         $this->assertSame(0, $rv); // sleep returns 0 on success
         $rv = $invoker->invoke(self::class . '::methodBar', 42);
         $check($rv);
+    }
 
-        $func2 = function () {
-            return func_get_args();
-        };
-        $this->assertSame([], $invoker->invoke($func2));
-        $this->assertSame([42], $invoker->invoke($func2, 42));
-        $this->assertSame(['foo'], $invoker->invoke($func2, 'foo'));
-
+    public function testInvokerReadsTagsByDefault()
+    {
+        $invoker = new WireInvoker(ContainerProvider::createContainer());
         // tags should be read by default
         $rv = $invoker->invoke([$this, 'methodTagOverride'], 42);
         $this->assertCount(3, $rv);
         $this->assertInstanceOf(Baz::class, $rv[0]);
         $this->assertInstanceOf(WireGenie::class, $rv[1]);
         $this->assertSame(42, $rv[2]);
+    }
+
+    public function testAutomaticResolutionCanBeOverridden()
+    {
+        $invoker = new WireInvoker($sleeve = ContainerProvider::createContainer());
+        $func = function (Bar $bar) {
+            return func_get_args();
+        };
+        // normally resolves to Bar instance
+        $this->assertSame([$sleeve->get(Bar::class)], $invoker->invoke($func));
+
+        /**
+         * @param Bar $bar [wire:] <-- empty tag indicates no wiring
+         * @return array
+         */
+        $funcOverridden = function (Bar $bar) {
+            return func_get_args();
+        };
+        $baz = $sleeve->get(Baz::class);
+        // but here we turn the detection off and provide our own instance (of Baz)
+        $this->assertSame([$baz], $invoker->invoke($funcOverridden, $baz));
     }
 
     public function testConstructor()

@@ -12,7 +12,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
 /**
- * WireGenieTest
+ * @internal test
  */
 final class WireGenieTest extends TestCase
 {

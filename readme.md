@@ -21,7 +21,7 @@ The main purposes of the package are to provide a limited means of wiring servic
 without directly exposing a service container,
 and to help wire services automatically.
 
-> 💡
+> Note 💡
 >
 > This approach solves an edge case in certain implementations where dependency injection
 > boilerplate can not be avoided or reduced in a different way.
@@ -102,7 +102,7 @@ Some offer both conventions, some offer only one.\
 It is important to understand how _your_ container exposes the services to fully leverage `WireGenie` and `WireInvoker`.
 
 
-## Usage
+## Basic usage
 
 > Note: In the following example, services are accessed using plain string keys.
 
@@ -197,8 +197,11 @@ WireInvoker::employ($wireGenie)->invoke($factory);
 ```
 In this case, services registered as `my-identifier` and `other-identifier` are fetched from the container.
 
-> Note that an empty wire tag `[wire:]` with the colon at the end
-> can be used to indicate that a service should _not_ be wired.
+> Tip 💡
+>
+> An empty wire tag `[wire:]` (including the colon at the end)
+> can be used to indicate that a service should _not_ be wired.\
+> Useful when you want to pass custom objects to a call.
 
 
 ### Filling in for unresolved parameters

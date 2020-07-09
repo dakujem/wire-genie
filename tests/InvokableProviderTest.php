@@ -9,6 +9,9 @@ use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use stdClass;
 
+/**
+ * @internal test
+ */
 final class InvokableProviderTest extends TestCase
 {
     public function testCallable(): void
