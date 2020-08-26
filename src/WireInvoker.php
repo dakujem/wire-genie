@@ -90,7 +90,7 @@ final class WireInvoker implements Invoker, Constructor
         ?callable $reflector = null
     ): self {
         $worker = function (ContainerInterface $container) use ($detector, $serviceProxy, $reflector) {
-            return new static($container);
+            return new static($container, $detector, $serviceProxy, $reflector);
         };
         return $wireGenie->exposeContainer($worker);
     }
