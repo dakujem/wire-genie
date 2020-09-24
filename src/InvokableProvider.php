@@ -41,7 +41,7 @@ class InvokableProvider implements Invoker
      */
     public function invoke(callable $target)
     {
-        return call_user_func($target, ...$this->callArgs);
+        return $target(...$this->callArgs);
     }
 
     /**

@@ -21,7 +21,7 @@ final class InvokableProviderTest extends TestCase
         $this->assertIsCallable($ip, 'InvokableProvider is not callable.');
 
         $hasBeenCalled = false;
-        call_user_func($ip, function () use (&$hasBeenCalled) {
+        $ip(function () use (&$hasBeenCalled) {
             $hasBeenCalled = true;
         });
 
@@ -40,7 +40,7 @@ final class InvokableProviderTest extends TestCase
         $ip = new InvokableProvider();
 
         $hasBeenCalled = false;
-        call_user_func($ip, function () use (&$hasBeenCalled) {
+        $ip(function () use (&$hasBeenCalled) {
             $hasBeenCalled = true;
         });
 
@@ -81,7 +81,7 @@ final class InvokableProviderTest extends TestCase
             $this->assertSame(42, $scalar);
             $hasBeenInvokedTwice += 1;
         });
-        call_user_func($ip, function ($arg1, $arg2, $arg3, $scalar) use (
+        $ip(function ($arg1, $arg2, $arg3, $scalar) use (
             $instance1,
             $instance2,
             $instance3,

@@ -68,7 +68,7 @@ final class WireInvoker implements Invoker, Constructor
         $this->serviceProvider = $serviceProxy === null ? function ($id) use ($container) {
             return $container->has($id) ? $container->get($id) : null;
         } : function ($id) use ($container, $serviceProxy) {
-            return call_user_func($serviceProxy, $id, $container);
+            return $serviceProxy($id, $container);
         };
     }
 
@@ -107,7 +107,7 @@ final class WireInvoker implements Invoker, Constructor
     public function invoke(callable $target, ...$staticArguments)
     {
         $args = $this->resolveArguments($target, ...$staticArguments);
-        return call_user_func($target, ...$args);
+        return $target(...$args);
     }
 
     /**
@@ -150,8 +150,8 @@ final class WireInvoker implements Invoker, Constructor
      */
     private function resolveArguments($target, ...$staticArguments): iterable
     {
-        $reflection = call_user_func($this->reflector ?? ArgInspector::class . '::reflectionOf', $target);
-        $identifiers = call_user_func($this->detector ?? ArgInspector::typeDetector(ArgInspector::tagReader()), $reflection);
+        $reflection = ($this->reflector ?? ArgInspector::class . '::reflectionOf')($target);
+        $identifiers = ($this->detector ?? ArgInspector::typeDetector(ArgInspector::tagReader()))($reflection);
         if (count($identifiers) > 0) {
             return static::resolveServicesFillingInStaticArguments(
                 $identifiers,
@@ -184,7 +184,7 @@ final class WireInvoker implements Invoker, Constructor
         if (count($identifiers) > 0) {
             $services = array_map(function ($identifier) use ($serviceProvider, &$staticArguments) {
                 if ($identifier !== null) {
-                    return call_user_func($serviceProvider, $identifier);
+                    return $serviceProvider($identifier);
                 }
                 if (count($staticArguments) > 0) {
                     return array_shift($staticArguments);

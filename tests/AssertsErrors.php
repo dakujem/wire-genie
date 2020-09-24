@@ -34,7 +34,7 @@ trait AssertsErrors
             $this->fail(sprintf('An exception of type "%s" does not exist.', $expectedException));
         }
         try {
-            call_user_func($callable);
+            $callable();
         } catch (\Exception $e) {
             $class = get_class($e);
             $message = $e->getMessage();

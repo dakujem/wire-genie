@@ -150,7 +150,7 @@ final class WireInvokerTest extends TestCase
         // passes ok
         $invoker->invoke([$this, 'methodFoo'], 42);
 
-        $this->expectErrorMessage('Too few arguments to function Dakujem\Tests\WireInvokerTest::methodFoo(), 1 passed and exactly 2 expected');
+        $this->expectErrorMessage('Too few arguments to function Dakujem\Tests\WireInvokerTest::methodFoo(), 1 passed');
 
         // type error, missing argument
         $invoker->invoke([$this, 'methodFoo']);
@@ -171,7 +171,7 @@ final class WireInvokerTest extends TestCase
         $invoker->invoke($func, 42);
         $invoker->invoke($func2);
 
-        $this->expectErrorMessage('Too few arguments to function Dakujem\Tests\WireInvokerTest::Dakujem\Tests\{closure}(), 1 passed and exactly 2 expected');
+        $this->expectErrorMessage('Too few arguments to function Dakujem\Tests\WireInvokerTest::Dakujem\Tests\{closure}(), 1 passed');
 
         // type error, missing argument
         $invoker->invoke($func);

@@ -117,7 +117,7 @@ final class ArgInspector
     ): array {
         $types = array_map(function (ParamRef $parameter) use ($reflection, $paramDetector): ?string {
             return $paramDetector !== null ?
-                call_user_func($paramDetector, $parameter, $reflection) :
+                $paramDetector($parameter, $reflection) :
                 static::typeHintOf($parameter);
         }, $reflection->getParameters());
 

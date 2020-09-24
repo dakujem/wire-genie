@@ -75,7 +75,7 @@ final class WireLimiterTest extends TestCase
     private function throws(string $exception, callable $func)
     {
         try {
-            call_user_func($func);
+            $func();
         } catch (Throwable $e) {
         }
         $this->assertTrue(($e ?? null) instanceof $exception, 'Failed to throw ' . $exception . '. ' . (isset($e) ? 'Throwable ' . get_class($e) : 'Nothing') . ' was thrown.');

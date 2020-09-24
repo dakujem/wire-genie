@@ -101,6 +101,6 @@ final class WireGenie
      */
     public function exposeContainer(callable $worker)
     {
-        return call_user_func($worker, $this->container, $this);
+        return $worker($this->container, $this);
     }
 }
