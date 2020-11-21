@@ -41,7 +41,7 @@ final class WireInvoker implements Invoker, Constructor
      * Construct an instance of WireInvoker. Really? Yup!
      *
      * Detector, reflector and service proxy work as a pipeline to provide a service for a target's parameter:
-     *      $service = $serviceProvider( $detector( $reflector( $target ) ) )
+     *      $service = $serviceProxy( $detector( $reflector( $target ) ) )
      *
      * In theory, the whole pipeline can be altered not to work with reflections,
      * there are no restriction to return types of the three callables, except for the detector.
