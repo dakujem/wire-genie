@@ -10,7 +10,9 @@ use ReflectionException;
 use ReflectionFunction;
 use ReflectionFunctionAbstract as FunctionRef;
 use ReflectionMethod;
+use ReflectionNamedType;
 use ReflectionParameter as ParamRef;
+use ReflectionUnionType;
 
 /**
  * Argument Inspector.
@@ -179,8 +181,14 @@ final class ArgInspector
 
     private static function typeHintOf(ParamRef $parameter): ?string
     {
-        $typeHintedClass = $parameter->getClass();
-        return $typeHintedClass !== null ? $typeHintedClass->getName() : null;
+        $typeRef = $parameter->getType();
+        if ($typeRef instanceof ReflectionUnionType) {
+            // Note for PHP 8.0+: only the first type hint is used when a union type is hinted.
+            $typeRef = $typeRef->getTypes()[0] ?? null;
+        }
+        return $typeRef instanceof ReflectionNamedType && !$typeRef->isBuiltin()
+            ? $typeRef->getName()
+            : null;
     }
 
     /**

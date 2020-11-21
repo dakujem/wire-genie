@@ -1,5 +1,6 @@
 # Wire Genie - Dependency Provider
 
+![PHP from Packagist](https://img.shields.io/packagist/php-v/dakujem/wire-genie)
 [![Build Status](https://travis-ci.org/dakujem/wire-genie.svg?branch=master)](https://travis-ci.org/dakujem/wire-genie)
 
 
