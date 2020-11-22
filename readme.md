@@ -1,33 +1,19 @@
-# Wire Genie - Dependency Provider
+# Wire Genie
 
 ![PHP from Packagist](https://img.shields.io/packagist/php-v/dakujem/wire-genie)
 [![Build Status](https://travis-ci.org/dakujem/wire-genie.svg?branch=master)](https://travis-ci.org/dakujem/wire-genie)
 
+**Dependency Provider & Autowiring Tool** for PSR-11 service containers.
 
 > 💿 `composer require dakujem/wire-genie`
 
-Allows to easily
+Allows to
+- automatically detect parameter types of a _callable_
+  and wire respective dependencies to invoke it
+- automatically detect _constructor_ parameters of a _class_
+  and wire respective dependencies to construct it
 - fetch multiple dependencies from a service container
-and provide them as arguments to _callables_
-- automatically detect parameter types of a _callable_ and wire respective dependencies to invoke it
-- automatically detect _constructor_ parameters of a _class_ and wire respective dependencies to construct it
-
-> Disclaimer 🤚
->
-> Improper use of this package might break established IoC principles
-> and degrade your dependency injection container to a service locator,
-> so use the package with caution.
-
-The main purposes of the package are to provide a limited means of wiring services
-without directly exposing a service container,
-and to help wire services automatically at runtime.
-
-> Note 💡
->
-> This approach solves an edge case in certain implementations where dependency injection
-> boilerplate can not be avoided or reduced in a different way.
->
-> Normally you want to wire your dependencies when building your app's service container.
+  and provide them as arguments to _callables_
 
 
 ## How it works
@@ -37,6 +23,7 @@ it fetches specified dependencies from a container
 and passes them to a callable, invoking it and returning the result.
 
 ```php
+// create a WireGenie instance using any PSR-11 service container
 $wireGenie = new WireGenie($container);
 
 $factory = function( Dependency $dep1, OtherDependency $dep2, ... ){
@@ -229,21 +216,37 @@ Values from the static argument pool will be used one by one to fill in for unre
 
 ### When to use
 
-Note that `WireInvoker` resolves the dependencies at the moment of calling its `invoke`/`construct` methods, once per each call.\
-This is contrary to `WireGenie::provide*()` methods,
-that resolve the dependencies at the moment of their call and only once,
-regardless of how many callables are invoked by the provider returned by the methods.
-
-
 Automatic argument resolution is useful for:
 - async job execution
-    - supplying dependencies after a job is deserialized from a queue
+  - supplying dependencies after a job is deserialized from a queue
 - method dependency injection
-    - for controller methods, where dependencies differ between the handler methods
+  - for controller methods, where dependencies differ between the handler methods
 - generic factories that create instances with varying dependencies
 
-> Note that using reflection might have negative performance impact
-> if used heavily.
+The main purposes of the package are to provide a limited means of wiring services
+without directly exposing a service container,
+and to help wire services automatically at runtime.
+
+
+### When not to use
+
+Using reflection might have negative performance impact if used heavily. `WireInvoker` uses reflection to determine service types to fetch.
+
+Fetching services from the service container on-the-fly might solve
+an edge case in certain implementations where dependency injection
+boilerplate can not be avoided or reduced in a different way.
+
+Normally you want to wire your dependencies when building your app's service container.
+
+> Disclaimer 🤚
+>
+> Improper use of this package might break established IoC principles
+> and degrade your dependency injection container to a service locator,
+> so use the package with caution.
+>
+> Remember, it is always better to inject a service into a working class,
+> then to fetch the service from within the working class
+> (this is called "Inversion of Control", "IoC").
 
 
 ## Integration
@@ -333,6 +336,16 @@ $genie->provide( ... )->invoke(function( ... ){ ... });
 ```
 
 The shorthand syntax may also be used with `WireInvoker`, which itself is _callable_.
+
+
+### Lazy vs. Eager service retrieval
+
+There is a difference in the way services are fetched from the container:\
+`WireInvoker` resolves the dependencies lazily
+at the moment of calling its `invoke`/`construct` methods, once per each call.\
+This is contrary to `WireGenie::provide*()` methods,
+that resolve the dependencies at the moment of their call and only once,
+regardless of how many callables are invoked by the provider returned by the methods.
 
 
 ## Contributing
