@@ -1,5 +1,9 @@
 <?php
 
+use Dakujem\Wire\Attributes\Hot;
+use Dakujem\Wire\Attributes\Skip;
+use Dakujem\Wire\Attributes\Wire;
+
 class Service {}
 interface ServiceInterface {}
 class MyService implements ServiceInterface {
@@ -13,35 +17,6 @@ class MyOtherService {
     {
     }
 }
-
-interface AttemptConstructionWireHint{}
-interface IdentifierWireHint{}
-interface SuppressionWireHint{}
-
-#[Attribute]
-class Hot implements AttemptConstructionWireHint
-{
-    private array $args;
-
-    public function __construct(...$args)
-    {
-        $this->args = $args;
-    }
-}
-
-#[Attribute]
-class Wire implements IdentifierWireHint
-{
-    private string $identifier;
-
-    public function __construct(string $identifier)
-    {
-        $this->identifier = $identifier;
-    }
-}
-
-#[Attribute]
-class Skip implements SuppressionWireHint {}
 
 // dalsi atribut `Default`  #[Default(42)] - ma zmysel?
 // alebo mozno lepsie pridat nejako moznost spracovat vlastne atributy

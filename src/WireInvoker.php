@@ -151,7 +151,7 @@ final class WireInvoker implements Invoker, Constructor
     private function resolveArguments($target, ...$staticArguments): iterable
     {
         $reflection = ($this->reflector ?? ArgInspector::class . '::reflectionOf')($target);
-        $identifiers = ($this->detector ?? ArgInspector::typeDetector(ArgInspector::tagReader()))($reflection);
+        $identifiers = ($this->detector ?? ArgInspector::typeDetector(ArgInspector::attributeReader()))($reflection);
         if (count($identifiers) > 0) {
             return static::resolveServicesFillingInStaticArguments(
                 $identifiers,
