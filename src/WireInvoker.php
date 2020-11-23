@@ -29,7 +29,7 @@ final class WireInvoker implements Invoker, Constructor
      * A callable that allows to customize the way services are fetched from a container.
      * @var callable function(string $identifier, ContainerInterface $container): service
      */
-    private $serviceProvider;
+    private $serviceProxy;
 
     /**
      * A callable that allows to customize the way a function reflection is acquired.
@@ -65,7 +65,7 @@ final class WireInvoker implements Invoker, Constructor
     ) {
         $this->detector = $detector;
         $this->reflector = $reflector;
-        $this->serviceProvider = $serviceProxy === null ? function ($id) use ($container) {
+        $this->serviceProxy = $serviceProxy === null ? function ($id) use ($container) {
             return $container->has($id) ? $container->get($id) : null;
         } : function ($id) use ($container, $serviceProxy) {
             return $serviceProxy($id, $container);
@@ -141,8 +141,8 @@ final class WireInvoker implements Invoker, Constructor
 
     /**
      * Works sort of as a pipeline:
-     *  $target -> $reflector -> $detector -> serviceProvider => service
-     *  or $serviceProvider($detector($reflector($target)))
+     *  $target -> $reflector -> $detector -> serviceProxy => service
+     *  or $serviceProxy($detector($reflector($target)))
      *
      * @param callable|string $target a callable to be invoked or a name of a class to be constructed
      * @param mixed ...$staticArguments static arguments to fill in for parameters where identifier can not be detected
@@ -155,7 +155,7 @@ final class WireInvoker implements Invoker, Constructor
         if (count($identifiers) > 0) {
             return static::resolveServicesFillingInStaticArguments(
                 $identifiers,
-                $this->serviceProvider,
+                $this->serviceProxy,
                 $staticArguments
             );
         }
