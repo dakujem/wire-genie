@@ -41,7 +41,26 @@ final class ArgInspector
         };
     }
 
+    public static function attributeDetector(): callable
+    {
+        return static::typeDetector(static::attributeReader(false));
+    }
+
+    public static function attributeReader(bool $defaultToTypeHint = true): callable
+    {
+        return function (ParamRef $param) use ($defaultToTypeHint): string|array|null {
+            //
+            // TODO
+            //
+
+            // omit empty annotations - empty wire tag indicates "no wiring"
+            return $typeByAttribute ?? ($defaultToTypeHint ? static::typeHintOf($param) : null);
+        };
+    }
+
     /**
+     * @deprecated switch to using attributes for much better performance.
+     *
      * Returns a reflection-based detector that only detects "wire tags".
      *
      * Usage:
@@ -56,6 +75,8 @@ final class ArgInspector
     }
 
     /**
+     * @deprecated switch to using attributes for much better performance.
+     *
      * Returns a callable to be used as $detector argument to the `ArgInspector::detectTypes()` call.
      * @see ArgInspector::detectTypes()
      *
@@ -192,6 +213,8 @@ final class ArgInspector
     }
 
     /**
+     * @deprecated switch to using attributes for much better performance.
+     *
      * @internal
      */
     public static function parseWireTags(FunctionRef $reflection, string $tag = null): array
