@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Dakujem;
 
-use Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface as Container;
+use ReflectionParameter;
 
 /**
  * WireInvoker - an invoker and constructor class used for automatic callable invocation and class construction.
@@ -21,24 +22,26 @@ final class WireInvoker implements Invoker, Constructor
 
     /**
      * A callable that allows to customize the way service identifiers are detected.
-     * @var callable function(ReflectionFunctionAbstract $reflection): string[]
+     * @var callable function(ReflectionFunctionAbstract $reflection): ReflectionParameter[]
      */
     private $detector;
 
     /**
-     * A callable that allows to customize the way services are fetched from a container.
-     * @var callable function(string $identifier, ContainerInterface $container): service
+     * A callable that allows to customize the way service identifiers are detected and fetched from a container.
+     * @var callable function(ReflectionParameter, Container, callable): mixed
      */
-    private $serviceProxy;
+    private $resolver;
 
     /**
-     * A callable that allows to customize the way a function reflection is acquired.
-     * @var callable function($target): FunctionReflectionAbstract
+     * A callable that allows to customize the way service identifiers are detected.
+     * @var callable function(iterable, Container): iterable
      */
-    private $reflector;
+    private $mapper;
 
     /**
      * Construct an instance of WireInvoker. Really? Yup!
+     *
+     * TODO doc-comment
      *
      * Detector, reflector and service proxy work as a pipeline to provide a service for a target's parameter:
      *      $service = $serviceProxy( $detector( $reflector( $target ) ) )
@@ -46,51 +49,44 @@ final class WireInvoker implements Invoker, Constructor
      * In theory, the whole pipeline can be altered not to work with reflections,
      * there are no restriction to return types of the three callables, except for the detector.
      *
-     * @param ContainerInterface $container service container
+     * @param Container $container service container
      * @param callable|null $detector a callable used for identifier detection;
      *                                takes the result of $reflector, MUST return an array of service identifiers;
      *                                function(ReflectionFunctionAbstract $reflection): string[]
      * @param callable|null $serviceProxy a callable that takes a service identifier and a container instance
      *                                    and SHOULD return the requested service;
-     *                                    function(string $identifier, ContainerInterface $container): service
+     *                                    function(string $identifier, Container $container): service
      * @param callable|null $reflector a callable used to get the reflection of the target being invoked or constructed;
      *                                 SHOULD return a reflection of the function or constructor that will be invoked;
      *                                 function($target): FunctionReflectionAbstract
      */
     public function __construct(
-        ContainerInterface $container,
+        private Container $container,
+        ?callable $resolver = null,
         ?callable $detector = null,
-        ?callable $serviceProxy = null,
-        ?callable $reflector = null
+        ?callable $mapper = null
     ) {
         $this->detector = $detector;
-        $this->reflector = $reflector;
-        $this->serviceProxy = $serviceProxy === null ? function ($id) use ($container) {
-            return $container->has($id) ? $container->get($id) : null;
-        } : function ($id) use ($container, $serviceProxy) {
-            return $serviceProxy($id, $container);
-        };
+        $this->resolver = $resolver; // TODO it may be a part of the mapper directly if we use a friction reducer factory
+        $this->mapper = $mapper;
     }
 
     /**
      * Create an instance of WireInvoker using a WireGenie instance's container.
-     * Other parameters are the same as for the constructor.
+     * The rest of the parameters are the same as for the constructor.
      * @see WireInvoker::__construct()
      *
      * @param WireGenie $wireGenie
-     * @param callable|null $detector
-     * @param callable|null $serviceProxy
-     * @param callable|null $reflector
-     * @return static
+     * @return self
      */
     public static function employ(
         WireGenie $wireGenie,
+        ?callable $resolver = null,
         ?callable $detector = null,
-        ?callable $serviceProxy = null,
-        ?callable $reflector = null
+        ?callable $mapper = null
     ): self {
-        $worker = function (ContainerInterface $container) use ($detector, $serviceProxy, $reflector) {
-            return new static($container, $detector, $serviceProxy, $reflector);
+        $worker = function (Container $container) use ($resolver, $detector, $mapper) {
+            return new self($container, $resolver, $detector, $mapper);
         };
         return $wireGenie->exposeContainer($worker);
     }
@@ -101,68 +97,142 @@ final class WireInvoker implements Invoker, Constructor
      * Returns the result of the call.
      *
      * @param callable $target callable to be invoked
-     * @param mixed ...$staticArguments static argument pool
+     * @param mixed ...$staticArgs static argument pool
      * @return mixed result of the $target callable invocation
      */
-    public function invoke(callable $target, ...$staticArguments)
+    public function invoke(callable $target, ...$staticArgs): mixed
     {
-        $args = $this->resolveArguments($target, ...$staticArguments);
-        return $target(...$args);
+        return $target(...$this->resolveArguments($target, ...$staticArgs));
     }
 
     /**
-     * Constructs the requested object with automatically resolved arguments.
+     * Constructs the requested object with automatically resolved constructor arguments.
      * Unresolved arguments are filled in from the static argument pool.
      * Returns the constructed instance.
      *
      * @param string $target target class name
-     * @param mixed ...$staticArguments static argument pool
+     * @param mixed ...$staticArgs static argument pool
      * @return mixed the constructed class instance
      */
-    public function construct(string $target, ...$staticArguments)
+    public function construct(string $target, ...$staticArgs): mixed
     {
-        $args = $this->resolveArguments($target, ...$staticArguments);
-        return new $target(...$args);
+        return new $target(...$this->resolveArguments($target, ...$staticArgs));
     }
 
     /**
      * This provider instances are also callable.
      *
      * @param callable|string $target callable to be invoked or a name of a class to be constructed.
-     * @param mixed ...$staticArguments static argument pool
+     * @param mixed ...$staticArgs static argument pool
      * @return mixed result of the $target callable invocation or an instance of the requested class
      */
-    public function __invoke($target, ...$staticArguments)
+    public function __invoke(callable|string $target, ...$staticArgs): mixed
     {
         return is_string($target) && class_exists($target) ?
-            $this->construct($target, ...$staticArguments) :
-            $this->invoke($target, ...$staticArguments);
+            $this->construct($target, ...$staticArgs) :
+            $this->invoke($target, ...$staticArgs);
     }
 
     /**
-     * Works sort of as a pipeline:
-     *  $target -> $reflector -> $detector -> serviceProxy => service
-     *  or $serviceProxy($detector($reflector($target)))
+     * Works like this:
+     * - a detector produces a list of parameters to be resolved, given a function or a class name
+     * - the list is passed to a mapper that will map it to a list of arguments
+     * - the default mapper will iterate over the list of parameters and pass each item to the resolver
+     *   along with the container instance and the next static argument
+     * - the resolver is expected to return a value to be used as argument for each given parameter
      *
      * @param callable|string $target a callable to be invoked or a name of a class to be constructed
      * @param mixed ...$staticArguments static arguments to fill in for parameters where identifier can not be detected
      * @return iterable
      */
-    private function resolveArguments($target, ...$staticArguments): iterable
+    private function resolveArguments(callable|string $target, ...$staticArguments): iterable
     {
-        $reflection = ($this->reflector ?? ArgInspector::class . '::reflectionOf')($target);
-        $identifiers = ($this->detector ?? ArgInspector::typeDetector(ArgInspector::attributeReader()))($reflection);
-        if (count($identifiers) > 0) {
-            return static::resolveServicesFillingInStaticArguments(
-                $identifiers,
-                $this->serviceProxy,
-                $staticArguments
+        return ($this->mapper ?? self::defaultMapper($this->resolver ?? self::defaultResolver()))(
+            ($this->detector ?? self::defaultDetector())($target),
+            $this->container,
+            $staticArguments,
+        );
+    }
+
+    private function defaultDetector(): callable
+    {
+        return fn(callable|string $target): iterable => (ArgInspector::reflectionOf($target))->getParameters();
+    }
+
+    private function defaultMapper(callable $resolver): callable
+    {
+        return function (iterable $params, Container $container, array $staticArgs) use ($resolver): iterable {
+            $args = array_reverse($staticArgs, true); // preserve keys!
+
+            // consume a static arg
+            $next = function (string $name) use (&$args): mixed {
+                // if there is an attr with given name, consume it
+                if (array_key_exists($name, $args)) {
+                    try {
+                        return $args[$name];
+                    } finally {
+                        unset($args[$name]);
+                    }
+                }
+
+                // if there is none, use the first available, but only if its index is numeric !
+                $args = [];
+                end($args);
+                $key = key($args);
+                if (is_int($key)) {
+                    try {
+                        return $args[$key];
+                    } finally {
+                        unset($args[$key]);
+                    }
+                }
+
+                // otherwise throw to indicate there is no other argument available
+                throw new ArgumentNotAvailable($name);
+            };
+
+            /** @var ReflectionParameter $param */
+            foreach ($params as $param) {
+                // skip variadic parameter(s)
+                if (!$param->isVariadic()) {
+                    // TODO is there any benefit in using a generator here? probably not.
+                    yield $resolver($param, $container, $next); // TODO yield with key?? $param->getName() =>
+                }
+            }
+            // only yield the rest args with numeric indices
+            yield from array_reverse(
+                array_filter($args, fn(int|string $key): bool => is_int($key), ARRAY_FILTER_USE_KEY)
             );
-        }
-        return $staticArguments;
+        };
+    }
+
+    private function defaultResolver(): callable
+    {
+        // TODO
+        return function (ReflectionParameter $param, Container $container, callable $staticArgProvider): mixed {
+            // check the "skip" hint, use static argument
+
+            // check if there is a wire hint, try to fetch the service
+            // attempt to construct the service if hinted so
+
+            // in a loop for all possible type-hinted classes,
+            // try to fetch the service
+            // attempt to construct the class if hinted so
+
+            // if the type hint is a built-in type or there are no more type-hinted classes,
+            // try to use a static argument from the pool
+
+            // fall back to the default value for the parameter, if any
+
+            // return null for nullable parameters
+
+            // throw otherwise
+        };
     }
 
     /**
+     * @derpecated TODO remove ?
+     *
      * A helper method.
      * For each service identifier calls the service provider.
      * If an identifier is `null`, one of the static arguments is used instead.
