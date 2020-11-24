@@ -22,7 +22,7 @@ class InvokableProvider implements Invoker
 {
     use PredictableAccess;
 
-    private $callArgs;
+    private array $callArgs;
 
     /**
      * @param mixed ...$callArgs arguments that will be passed to callables during the invocation.
@@ -39,7 +39,7 @@ class InvokableProvider implements Invoker
      * @param callable $target callable to be invoked
      * @return mixed result of the $target callable invocation
      */
-    public function invoke(callable $target)
+    public function invoke(callable $target): mixed
     {
         return $target(...$this->callArgs);
     }
@@ -50,7 +50,7 @@ class InvokableProvider implements Invoker
      * @param callable $target callable to be invoked
      * @return mixed result of the $target callable invocation
      */
-    public function __invoke(callable $target)
+    public function __invoke(callable $target): mixed
     {
         return $this->invoke($target);
     }

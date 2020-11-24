@@ -19,17 +19,14 @@ final class WireLimiter implements ContainerInterface
 {
     use PredictableAccess;
 
-    private $container;
-    private $whitelist;
-
     /**
      * @param ContainerInterface $container main container to delegate the calls to
      * @param string[] $whitelist list of allowed class names
      */
-    public function __construct(ContainerInterface $container, array $whitelist)
-    {
-        $this->container = $container;
-        $this->whitelist = $whitelist;
+    public function __construct(
+        private ContainerInterface $container,
+        private iterable $whitelist
+    ) {
     }
 
     public function has($id): bool
@@ -40,7 +37,7 @@ final class WireLimiter implements ContainerInterface
     /**
      * @throws WireLimiterException
      */
-    public function get($id)
+    public function get($id): mixed
     {
         $dep = $this->container->get($id);
         foreach ($this->whitelist as $className) {

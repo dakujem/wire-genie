@@ -72,15 +72,20 @@ final class WireInvoker implements Invoker, Constructor
     }
 
     /**
-     * Create an instance of WireInvoker using a WireGenie instance's container.
-     * The rest of the parameters are the same as for the constructor.
+     * Create an instance of WireInvoker
+     * by passing either a WireGenie or a container implementation instance.
+     *
+     * The rest of the parameters are the same as the constructor's.
      * @see WireInvoker::__construct()
      *
-     * @param WireGenie $wireGenie
+     * @param WireGenie|Container $source
+     * @param callable|null $resolver
+     * @param callable|null $detector
+     * @param callable|null $mapper
      * @return self
      */
     public static function employ(
-        WireGenie $wireGenie,
+        WireGenie|Container $source,
         ?callable $resolver = null,
         ?callable $detector = null,
         ?callable $mapper = null
@@ -88,7 +93,7 @@ final class WireInvoker implements Invoker, Constructor
         $worker = function (Container $container) use ($resolver, $detector, $mapper) {
             return new self($container, $resolver, $detector, $mapper);
         };
-        return $wireGenie->exposeContainer($worker);
+        return $source instanceof WireGenie ? $source->exposeContainer($worker) : $worker($source);
     }
 
     /**

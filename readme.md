@@ -7,6 +7,33 @@
 
 > 💿 `composer require dakujem/wire-genie`
 
+## TODOs
+
+- [ ] namespace
+- [ ] deprecations
+- [ ] docs
+- [ ] compatibility (for annotations/wire tags)
+
+```
+d\Wire\Invoker (interface)
+d\Wire\Constructor (interface)
+d\Wire\Attributes\Attribute
+d\Wire\Inspector (from ArgInspector)
+d\Wire\PredictableAccess
+
+d\Wire\Exceptions\ServiceNotWhitelisted (make LimiterException into an interface for compat.)
+d\Wire\Exceptions\ArgumentNotAvailable
+
+d\Wire\Genie (will contain the new "wireInvoker")
+d\Wire\Lamp (will contain the "WireGenie" from v1) if you rub it thoroughly, something might come out
+~~~~d\Wire\WireFrame ( /grid/solder/iron ...  from WireInvoker)~~~
+
++ autoload compat loader
+```
+
+---
+
+
 Allows to
 - automatically detect parameter types of a _callable_
   and wire respective dependencies to invoke it
