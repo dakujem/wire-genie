@@ -111,7 +111,7 @@ final class Lamp
      */
     public static function equip(Genie|Container $source): self
     {
-        return $source instanceof Genie ? $source->exposeContainer(function (Container $container) {
+        return $source instanceof Genie ? $source->exposeContainer(function (Container $container): self {
             return new self($container);
         }) : new self($source);
     }
