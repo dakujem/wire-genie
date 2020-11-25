@@ -4,19 +4,18 @@ declare(strict_types=1);
 
 namespace Dakujem;
 
-use Closure;
 use Dakujem\Wire\Attributes\Attribute;
+use Dakujem\Wire\Inspector;
 use ReflectionAttribute;
-use ReflectionClass;
 use ReflectionException;
-use ReflectionFunction;
 use ReflectionFunctionAbstract as FunctionRef;
-use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionParameter as ParamRef;
 use ReflectionUnionType;
 
 /**
+ * @deprecated Use Inspector instead.
+ *
  * Argument Inspector.
  *
  * Allows for reflection-based parameter type detection.
@@ -172,11 +171,9 @@ final class ArgInspector
      * @return FunctionRef|null
      * @throws ReflectionException
      */
-    public static function reflectionOf($target): ?FunctionRef
+    public static function reflectionOf(callable|string $target): ?FunctionRef
     {
-        return is_string($target) && class_exists($target) ?
-            static::reflectionOfConstructor($target) :
-            static::reflectionOfCallable($target);
+        return Inspector::reflectionOf($target);
     }
 
     /**
@@ -188,17 +185,7 @@ final class ArgInspector
      */
     public static function reflectionOfCallable(callable $callable): FunctionRef
     {
-        if ($callable instanceof Closure) {
-            return new ReflectionFunction($callable);
-        }
-        if (is_string($callable)) {
-            $pcs = explode('::', $callable);
-            return count($pcs) > 1 ? new ReflectionMethod($pcs[0], $pcs[1]) : new ReflectionFunction($callable);
-        }
-        if (!is_array($callable)) {
-            $callable = [$callable, '__invoke'];
-        }
-        return new ReflectionMethod($callable[0], $callable[1]);
+        return Inspector::reflectionOfCallable($callable);
     }
 
     /**
@@ -211,7 +198,7 @@ final class ArgInspector
      */
     public static function reflectionOfConstructor(string $className): ?FunctionRef
     {
-        return (new ReflectionClass($className))->getConstructor();
+        return Inspector::reflectionOfConstructor($className);
     }
 
     private static function typeHintOf(ParamRef $parameter): ?string

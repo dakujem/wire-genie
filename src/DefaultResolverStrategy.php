@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Dakujem\Wire;
 
-use Dakujem\ArgInspector;
 use Dakujem\Wire\Attributes\AttemptWireHint as AttrHot;
 use Dakujem\Wire\Attributes\ConstructionWireHint as AttrMake;
 use Dakujem\Wire\Attributes\IdentifierWireHint as AttrWire;
@@ -128,7 +127,11 @@ final class DefaultResolverStrategy
 
     public static function defaultDetector(): callable
     {
-        return fn(callable|string $target): iterable => (ArgInspector::reflectionOf($target))->getParameters();
+        return function (callable|string $target): iterable {
+            // Note: the reflection may be null for classes without a constructor.
+            $ref = Inspector::reflectionOf($target);
+            return $ref !== null ? $ref->getParameters() : [];
+        };
     }
 
     public static function defaultResolver(): callable
