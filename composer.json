@@ -18,8 +18,10 @@
   },
   "autoload": {
     "psr-4": {
-      "Dakujem\\": "src/"
-    }
+      "Dakujem\\Wire\\": "src/",
+      "Dakujem\\": "src/legacy/"
+    },
+    "classmap": ["src/"]
   },
   "scripts": {
     "test": "phpunit tests"

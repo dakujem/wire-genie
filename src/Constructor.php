@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Dakujem;
+namespace Dakujem\Wire;
 
 /**
  * A general interface for an object able to create instances of other classes.

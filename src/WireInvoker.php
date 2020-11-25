@@ -4,8 +4,19 @@ declare(strict_types=1);
 
 namespace Dakujem;
 
+use Dakujem\Wire\Attributes\AttemptWireHint as AttrHot;
+use Dakujem\Wire\Attributes\IdentifierWireHint as AttrWire;
+use Dakujem\Wire\Attributes\SuppressionWireHint as AttrSkip;
+use Dakujem\Wire\Attributes\ConstructionWireHint as AttrMake;
+use Dakujem\Wire\Exceptions\ArgumentNotAvailable;
+use Dakujem\Wire\Exceptions\Unresolvable;
+use Dakujem\Wire\Exceptions\UnresolvableArgument;
+use Dakujem\Wire\Exceptions\UnresolvableCallArguments;
 use Psr\Container\ContainerInterface as Container;
-use ReflectionParameter;
+use ReflectionAttribute as AttrRef;
+use ReflectionNamedType;
+use ReflectionParameter as ParamRef;
+use ReflectionUnionType;
 
 /**
  * WireInvoker - an invoker and constructor class used for automatic callable invocation and class construction.
@@ -152,11 +163,15 @@ final class WireInvoker implements Invoker, Constructor
      */
     private function resolveArguments(callable|string $target, ...$staticArguments): iterable
     {
-        return ($this->mapper ?? self::defaultMapper($this->resolver ?? self::defaultResolver()))(
-            ($this->detector ?? self::defaultDetector())($target),
-            $this->container,
-            $staticArguments,
-        );
+        try {
+            return ($this->mapper ?? self::defaultMapper($this->resolver ?? self::defaultResolver()))(
+                ($this->detector ?? self::defaultDetector())($target),
+                $this->container,
+                $staticArguments,
+            );
+        } catch (Unresolvable $ex) {
+            throw new UnresolvableCallArguments($ex);
+        }
     }
 
     private function defaultDetector(): callable
@@ -196,7 +211,7 @@ final class WireInvoker implements Invoker, Constructor
                 throw new ArgumentNotAvailable($name);
             };
 
-            /** @var ReflectionParameter $param */
+            /** @var ParamRef $param */
             foreach ($params as $param) {
                 // skip variadic parameter(s)
                 if (!$param->isVariadic()) {
@@ -213,62 +228,107 @@ final class WireInvoker implements Invoker, Constructor
 
     private function defaultResolver(): callable
     {
-        // TODO
-        return function (ReflectionParameter $param, Container $container, callable $staticArgProvider): mixed {
-            // check the "skip" hint, use static argument
+        //
+        // Fetching services from the container is always prioritized above live construction of the services.
+        //
+        return function (ParamRef $param, Container $container, callable $staticArgProvider): mixed {
+            //
+            // Check the "skip" hint, completely skip any automatic wiring if found.
+            //
+            $skip = $param->getAttributes(AttrSkip::class, AttrRef::IS_INSTANCEOF);
+            if ($skip !== []) {
+                //
+                // Check if there is a wire hint, try to fetch the service.
+                // Attempt to construct the service if hinted so.
+                //
+                // #[Wire(Foo::class)]
+                //
+                $wire = $param->getAttributes(AttrWire::class, AttrRef::IS_INSTANCEOF);
+                foreach ($wire as $attrRef) {
+                    /** @var AttrWire $attr */
+                    $attr = $attrRef->newInstance();
+                    try {
+                        return $this->construct($attr->getIdentifier());
+                    } catch (UnresolvableCallArguments) {
+                        // continue...
+                    }
+                }
 
-            // check if there is a wire hint, try to fetch the service
-            // attempt to construct the service if hinted so
+                $getTypes = function (ParamRef $param): array {
+                    $t = $param->getType();
+                    return $t instanceof ReflectionUnionType ? $t->getTypes() : [$t];
+                };
+                $getClassNames = function (iterable $refs): iterable {
+                    /** @var ReflectionNamedType $ref */
+                    foreach ($refs as $ref) {
+                        if (!$ref->isBuiltin()) {
+                            yield $ref->getName();
+                        }
+                    }
+                };
 
-            // in a loop for all possible type-hinted classes,
-            // try to fetch the service
-            // attempt to construct the class if hinted so
+                //
+                // In a loop for all possible type-hinted classes,
+                // try to fetch the service.
+                //
+                $serviceNames = $getClassNames($getTypes($param));
+                foreach ($serviceNames as $name) {
+                    if ($container->has($name)) {
+                        return $container->get($name);
+                    }
+                }
+
+                //
+                // Attempt to construct a service if hinted so.
+                //
+                // #[Make(Foo::class, 42, 'arg')]
+                //
+                $make = $param->getAttributes(AttrMake::class, AttrRef::IS_INSTANCEOF);
+                foreach ($make as $attrRef) {
+                    /** @var AttrMake $attr */
+                    $attr = $attrRef->newInstance();
+                    try {
+                        return $this->construct($attr->getClassName(), ...$attr->getConstructorArguments());
+                    } catch (UnresolvableCallArguments) {
+                        // continue...
+                    }
+                }
+
+                //
+                // Then, attempt to construct a service by type-hinted class names, if hinted so.
+                //
+                // #[Hot]
+                //
+                $hot = $param->getAttributes(AttrHot::class, AttrRef::IS_INSTANCEOF);
+                foreach ($hot !== [] ? $serviceNames : [] as $target) {
+                    try {
+                        return $this->construct($target);
+                    } catch (UnresolvableCallArguments) {
+                        // continue...
+                    }
+                }
+            }
 
             // if the type hint is a built-in type or there are no more type-hinted classes,
             // try to use a static argument from the pool
+            try {
+                return $staticArgProvider();
+            } catch (ArgumentNotAvailable) {
+                // continue...
+            }
 
             // fall back to the default value for the parameter, if any
+            if ($param->isOptional()) {
+                return $param->getDefaultValue();
+            }
 
             // return null for nullable parameters
+            if ($param->allowsNull()) {
+                return null;
+            }
 
             // throw otherwise
+            throw new UnresolvableArgument($param->getName());
         };
-    }
-
-    /**
-     * @derpecated TODO remove ?
-     *
-     * A helper method.
-     * For each service identifier calls the service provider.
-     * If an identifier is `null`, one of the static arguments is used instead.
-     *
-     * The resulting array might be a mix of services fetched from the service container via the provider
-     * and other values passed in as static arguments.
-     *
-     * @param array $identifiers array of (nullable string) service identifiers
-     * @param callable $serviceProvider returns requested services; function(string $identifier): object
-     * @param array $staticArguments
-     * @return array
-     */
-    public static function resolveServicesFillingInStaticArguments(
-        array $identifiers,
-        callable $serviceProvider,
-        array $staticArguments
-    ): array {
-        $services = [];
-        if (count($identifiers) > 0) {
-            $services = array_map(function ($identifier) use ($serviceProvider, &$staticArguments) {
-                if ($identifier !== null) {
-                    return $serviceProvider($identifier);
-                }
-                if (count($staticArguments) > 0) {
-                    return array_shift($staticArguments);
-                }
-                // when no static argument is present for an identifier, return null
-                return null;
-            }, $identifiers);
-        }
-        // merge with the rest of the static arguments
-        return array_merge(array_values($services), array_values($staticArguments));
     }
 }

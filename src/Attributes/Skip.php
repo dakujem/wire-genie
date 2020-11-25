@@ -13,7 +13,6 @@ use Attribute;
  * @author Andrej Rypak <xrypak@gmail.com>
  */
 #[Attribute]
-class Skip implements SuppressionWireHint
+final class Skip implements SuppressionWireHint
 {
-
 }

@@ -2,7 +2,7 @@
 
 namespace Dakujem\Tests;
 
-use Dakujem\InvokableProvider;
+use Dakujem\Provider;
 use Dakujem\Invoker;
 use Dakujem\WireGenie;
 use Dakujem\WireLimiter;
@@ -21,7 +21,7 @@ final class WireGenieTest extends TestCase
         $sleeve = ContainerProvider::createContainer();
         $wg = new WireGenie($sleeve);
 
-        $this->assertTrue($wg->provide() instanceof InvokableProvider);
+        $this->assertTrue($wg->provide() instanceof Provider);
     }
 
     public function testProvisioning()

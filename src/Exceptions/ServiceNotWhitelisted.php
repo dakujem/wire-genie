@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Dakujem;
+namespace Dakujem\Wire\Exceptions;
 
+use Dakujem\WireLimiterException;
 use Psr\Container\ContainerExceptionInterface;
 use RuntimeException;
 use Throwable;
@@ -11,9 +12,9 @@ use Throwable;
 /**
  * The access the service is not allowed.
  *
- * @author Andrej Rypák (dakujem) <xrypak@gmail.com>
+ * @author Andrej Rypak <xrypak@gmail.com>
  */
-class WireLimiterException extends RuntimeException implements ContainerExceptionInterface
+class ServiceNotWhitelisted extends RuntimeException implements ContainerExceptionInterface, WireLimiterException
 {
     public function __construct($message = null, $code = 0, Throwable $previous = null)
     {

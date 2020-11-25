@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Dakujem;
+namespace Dakujem\Wire;
 
 use LogicException;
 

@@ -7,19 +7,23 @@ namespace Dakujem\Wire\Attributes;
 use Attribute;
 
 /**
- * Hot wire. Attempt to construct the service if not provided by the service container.
- * @see AttemptConstructionWireHint
+ * Attempt to construct the given service.
  *
  * @author Andrej Rypak <xrypak@gmail.com>
  */
 #[Attribute]
-class Hot implements AttemptConstructionWireHint
+final class Make implements ConstructionWireHint
 {
     private array $args;
 
-    public function __construct(...$args)
+    public function __construct(private string $name, ...$args)
     {
         $this->args = $args;
+    }
+
+    public function getClassName(): string
+    {
+        return $this->name;
     }
 
     public function getConstructorArguments(): iterable

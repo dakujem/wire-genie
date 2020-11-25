@@ -2,20 +2,21 @@
 
 declare(strict_types=1);
 
-namespace Dakujem;
+namespace Dakujem\Wire;
 
+use Dakujem\Wire\Exceptions\ServiceNotWhitelisted;
 use Psr\Container\ContainerInterface;
 
 /**
  * A container wrapper that limits access to whitelisted class instances only.
  *
  * Usage:
- *   $limitedContainer = new WireLimiter( $fullContainer, [ WhitelistOnlyThisInterface::class ] );
- *   new WireGenie( $limitedContainer );
+ *   $limitedContainer = new Limiter( $fullContainer, [ WhitelistOnlyThisInterface::class ] );
+ *   new Lamp( $limitedContainer );
  *
  * @author Andrej Rypák (dakujem) <xrypak@gmail.com>
  */
-final class WireLimiter implements ContainerInterface
+final class Limiter implements ContainerInterface
 {
     use PredictableAccess;
 
@@ -35,7 +36,7 @@ final class WireLimiter implements ContainerInterface
     }
 
     /**
-     * @throws WireLimiterException
+     * @throws ServiceNotWhitelisted
      */
     public function get($id): mixed
     {
@@ -45,6 +46,6 @@ final class WireLimiter implements ContainerInterface
                 return $dep;
             }
         }
-        throw new WireLimiterException();
+        throw new ServiceNotWhitelisted();
     }
 }

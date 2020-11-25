@@ -2,13 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Dakujem;
+namespace Dakujem\Wire;
 
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 
 /**
- * WireGenie - wire dependencies to a callable.
+ * Magic Lamp. If you rub it thoroughly, something might come out.
+ *
+ * Wire known dependencies to a callable.
  *
  * Usage:
  *   $factoryFunction = function( ...dependencies... ){
@@ -16,17 +18,17 @@ use Psr\Container\ContainerInterface;
  *       return new Service( ... );
  *   };
  *
- *   $genie = new WireGenie( $serviceContainer ); // or use WireLimiter to limit access to certain services only
+ *   $lamp = new Lamp( $serviceContainer ); // or use Limiter to limit access to certain services only
  *
  *   // an identifier may be a string key or a class name, depending on your container implementation
- *   $invoker = $genie->provide( ...dependency-identifier-list... );
+ *   $invoker = $lamp->provide( ...dependency-identifier-list... );
  *
  *   $service = $invoker->invoke($factoryFunction); // then invoke the factory like this,
  *   $service = $invoker($factoryFunction);         // or like this
  *
  * @author Andrej Rypák (dakujem) <xrypak@gmail.com>
  */
-final class WireGenie
+final class Lamp
 {
     use PredictableAccess;
 
@@ -46,7 +48,7 @@ final class WireGenie
      * Alternatively, you can use `provideStrict` or `provideSafe` for different behaviour.
      *
      * @param mixed ...$dependencies list of identifiers for the container
-     * @return InvokableProvider callable
+     * @return Provider callable
      */
     public function provide(...$dependencies): callable
     {
@@ -54,14 +56,14 @@ final class WireGenie
             return $this->container->has($dep) ? $this->container->get($dep) : null;
         }, $dependencies);
 
-        return new InvokableProvider(...$resolved);
+        return new Provider(...$resolved);
     }
 
     /**
      * Same as `provide`, except an exception is thrown when the container can not or will not resolve a dependency.
      *
      * @param mixed ...$dependencies list of identifiers for the container
-     * @return InvokableProvider callable
+     * @return Provider callable
      */
     public function provideStrict(...$dependencies): callable
     {
@@ -69,7 +71,7 @@ final class WireGenie
             return $this->container->get($dep); // will throw if the dependency is not present
         }, $dependencies);
 
-        return new InvokableProvider(...$resolved);
+        return new Provider(...$resolved);
     }
 
     /**
@@ -77,7 +79,7 @@ final class WireGenie
      * Dependencies that can not or will not be resolved by the container are resolved to null.
      *
      * @param mixed ...$dependencies list of identifiers for the container
-     * @return InvokableProvider callable
+     * @return Provider callable
      */
     public function provideSafe(...$dependencies): callable
     {
@@ -89,7 +91,7 @@ final class WireGenie
             }
         }, $dependencies);
 
-        return new InvokableProvider(...$resolved);
+        return new Provider(...$resolved);
     }
 
     /**

@@ -2,23 +2,28 @@
 
 declare(strict_types=1);
 
-namespace Dakujem;
+namespace Dakujem\Wire;
 
 /**
- * A static provider returned by WireGenie::provide method(s).
+ * A simple static dependency provider.
  * The instances are _callable_.
+ *
+ * This class is returned by Lamp::provide* method(s).
  *
  * All the call arguments will have been resolved at the moment of creating the instance.
  *
  * Usage:
- *   $invokableProvider = (new WireGenie( ... ))->provide( ... );
- *   $invokableProvider->invoke(function( ... ){
+ *   $provider = new Provider($service1, $service2);
+ *   // or
+ *   $provider = (new Lamp( ... ))->provide( Service1::class, Service2::class );
+ *   // then
+ *   $provider->invoke(function( Service1 $service1, Service2 $service2 ){
  *       // do stuff or create stuff
  *   });
  *
  * @author Andrej Rypák (dakujem) <xrypak@gmail.com>
  */
-class InvokableProvider implements Invoker
+class Provider implements Invoker
 {
     use PredictableAccess;
 

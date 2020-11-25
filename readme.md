@@ -45,7 +45,7 @@ Allows to
 
 ## How it works
 
-[`WireGenie`](src/WireGenie.php) is rather simple,
+[`WireGenie`](src/Lamp.php) is rather simple,
 it fetches specified dependencies from a container
 and passes them to a callable, invoking it and returning the result.
 

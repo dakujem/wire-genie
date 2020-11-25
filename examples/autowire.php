@@ -1,6 +1,6 @@
 <?php
 
-use Dakujem\Wire\Attributes\Hot;
+use Dakujem\Wire\Attributes\Make;
 use Dakujem\Wire\Attributes\Skip;
 use Dakujem\Wire\Attributes\Wire;
 
@@ -24,10 +24,10 @@ class MyOtherService {
 
 $toCall = function (
     ?Service $s1,
-    #[Hot(123), Wire(MyService::class)] ServiceInterface $s2,
+    #[Make(123), Wire(MyService::class)] ServiceInterface $s2,
     $static,
     #[Wire('fokit')] $foo,
-    #[Hot] MyOtherService $s3,
+    #[Make] MyOtherService $s3,
     #[Skip] ?Service $skap, // No, NoWire, Skip, Omit, Hop, Nope, Off
     #[Skip] $nah,
     Service|MyService $union, // + union types

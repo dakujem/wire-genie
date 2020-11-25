@@ -14,7 +14,7 @@ use Attribute;
  * @author Andrej Rypak <xrypak@gmail.com>
  */
 #[Attribute]
-class Wire implements IdentifierWireHint
+final class Wire implements IdentifierWireHint
 {
     public function __construct(private string $identifier)
     {

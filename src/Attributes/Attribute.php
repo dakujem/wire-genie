@@ -11,5 +11,4 @@ namespace Dakujem\Wire\Attributes;
  */
 interface Attribute
 {
-
 }

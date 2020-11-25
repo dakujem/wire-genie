@@ -12,5 +12,4 @@ namespace Dakujem\Wire\Attributes;
  */
 interface SuppressionWireHint extends Attribute
 {
-
 }
