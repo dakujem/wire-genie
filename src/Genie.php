@@ -2,13 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Dakujem;
+namespace Dakujem\Wire;
 
+use Dakujem\ArgInspector;
 use Dakujem\Wire\Attributes\AttemptWireHint as AttrHot;
+use Dakujem\Wire\Attributes\ConstructionWireHint as AttrMake;
 use Dakujem\Wire\Attributes\IdentifierWireHint as AttrWire;
 use Dakujem\Wire\Attributes\SuppressionWireHint as AttrSkip;
-use Dakujem\Wire\Attributes\ConstructionWireHint as AttrMake;
 use Dakujem\Wire\Exceptions\ArgumentNotAvailable;
+use Dakujem\Wire\Exceptions\InvalidConfiguration;
 use Dakujem\Wire\Exceptions\Unresolvable;
 use Dakujem\Wire\Exceptions\UnresolvableArgument;
 use Dakujem\Wire\Exceptions\UnresolvableCallArguments;
@@ -19,17 +21,24 @@ use ReflectionParameter as ParamRef;
 use ReflectionUnionType;
 
 /**
- * WireInvoker - an invoker and constructor class used for automatic callable invocation and class construction.
+ * Wire Genie - a magical invoker of callables and constructor of classes.
+ * By default, it uses the reflection API and leverages PHP 8 attributes, but can be configured otherwise.
  *
  * The class revolves around two methods:
- * @see WireInvoker::invoke()
- * @see WireInvoker::construct()
+ * @see Genie::invoke()
+ * @see Genie::construct()
  *
  * @author Andrej Rypák (dakujem) <xrypak@gmail.com>
  */
-final class WireInvoker implements Invoker, Constructor
+final class Genie implements Invoker, Constructor
 {
     use PredictableAccess;
+
+    /**
+     * A callable resolver _strategy_.
+     * @var callable function(Container,callable|string $target, array $staticArgs): iterable
+     */
+    private $core;
 
     /**
      * A callable that allows to customize the way service identifiers are detected.
@@ -50,61 +59,23 @@ final class WireInvoker implements Invoker, Constructor
     private $mapper;
 
     /**
-     * Construct an instance of WireInvoker. Really? Yup!
+     * Construct an instance of Wire Genie. Really? Yup!
      *
-     * TODO doc-comment
+     * First, the detector is used to detect parameter types using the reflection API.
+     * Then, the mapper takes over to map each of the parameters into an argument for the invocation.
+     * It uses the resolver for each of the parameters.
      *
-     * Detector, reflector and service proxy work as a pipeline to provide a service for a target's parameter:
-     *      $service = $serviceProxy( $detector( $reflector( $target ) ) )
+     * In theory, the process can be altered not to work with reflection or attributes,
+     * there are no restriction to return types of the callables, except for the return type of the mapper.
      *
-     * In theory, the whole pipeline can be altered not to work with reflections,
-     * there are no restriction to return types of the three callables, except for the detector.
-     *
-     * @param Container $container service container
-     * @param callable|null $detector a callable used for identifier detection;
-     *                                takes the result of $reflector, MUST return an array of service identifiers;
-     *                                function(ReflectionFunctionAbstract $reflection): string[]
-     * @param callable|null $serviceProxy a callable that takes a service identifier and a container instance
-     *                                    and SHOULD return the requested service;
-     *                                    function(string $identifier, Container $container): service
-     * @param callable|null $reflector a callable used to get the reflection of the target being invoked or constructed;
-     *                                 SHOULD return a reflection of the function or constructor that will be invoked;
-     *                                 function($target): FunctionReflectionAbstract
+     * @param Container $container a PSR-11 service container implementation
+     * @param callable|null $core the resolver strategy; resolves a target into call arguments; MUST return an iterable type
      */
     public function __construct(
         private Container $container,
-        ?callable $resolver = null,
-        ?callable $detector = null,
-        ?callable $mapper = null
+        ?callable $core = null,
     ) {
-        $this->detector = $detector;
-        $this->resolver = $resolver; // TODO it may be a part of the mapper directly if we use a friction reducer factory
-        $this->mapper = $mapper;
-    }
-
-    /**
-     * Create an instance of WireInvoker
-     * by passing either a WireGenie or a container implementation instance.
-     *
-     * The rest of the parameters are the same as the constructor's.
-     * @see WireInvoker::__construct()
-     *
-     * @param WireGenie|Container $source
-     * @param callable|null $resolver
-     * @param callable|null $detector
-     * @param callable|null $mapper
-     * @return self
-     */
-    public static function employ(
-        WireGenie|Container $source,
-        ?callable $resolver = null,
-        ?callable $detector = null,
-        ?callable $mapper = null
-    ): self {
-        $worker = function (Container $container) use ($resolver, $detector, $mapper) {
-            return new self($container, $resolver, $detector, $mapper);
-        };
-        return $source instanceof WireGenie ? $source->exposeContainer($worker) : $worker($source);
+        $this->core = $core;
     }
 
     /**
@@ -164,10 +135,10 @@ final class WireInvoker implements Invoker, Constructor
     private function resolveArguments(callable|string $target, ...$staticArguments): iterable
     {
         try {
-            return ($this->mapper ?? self::defaultMapper($this->resolver ?? self::defaultResolver()))(
-                ($this->detector ?? self::defaultDetector())($target),
+            return ($this->core ?? self::defaultCore(self::defaultDetector(), self::defaultResolver()))(
                 $this->container,
-                $staticArguments,
+                $target,
+                ...$staticArguments,
             );
         } catch (Unresolvable $ex) {
             throw new UnresolvableCallArguments($ex);
@@ -179,12 +150,32 @@ final class WireInvoker implements Invoker, Constructor
         return fn(callable|string $target): iterable => (ArgInspector::reflectionOf($target))->getParameters();
     }
 
-    private function defaultMapper(callable $resolver): callable
+    /**
+     * a callable that utilizes the resolver to map the detected parameters to call arguments;
+     *                              MUST return an iterable type;
+     *                              function($params, Container $container, array $staticArgs):iterable
+     *
+     * @param callable $detector a callable used to detect parameters of a callable or class constructor;
+     *                           each of the parameters is passed to the $resolver;
+     *                           function(callable|string):iterable
+     * @param callable $resolver a callable that resolves each parameter into a respective argument;
+     *                           function(mixed $param, Container, callable $staticArgument): mixed
+     * @return callable default strategy for the Genie class
+     */
+    private function defaultCore(callable $detector, callable $resolver): callable
     {
-        return function (iterable $params, Container $container, array $staticArgs) use ($resolver): iterable {
+        // TODO the core itself can retrn a callable to be invoked later ...
+        return function (
+            Container $container,
+            callable|string $target,
+            ...$staticArgs,
+        ) use (
+            $detector,
+            $resolver,
+        ): iterable {
             $args = array_reverse($staticArgs, true); // preserve keys!
 
-            // consume a static arg
+            // prepare a callable to serve static arguments
             $next = function (string $name) use (&$args): mixed {
                 // if there is an attr with given name, consume it
                 if (array_key_exists($name, $args)) {
@@ -212,7 +203,10 @@ final class WireInvoker implements Invoker, Constructor
             };
 
             /** @var ParamRef $param */
-            foreach ($params as $param) {
+            foreach ($detector($target) as $param) {
+                if (!$param instanceof ParamRef) {
+                    throw new InvalidConfiguration();
+                }
                 // skip variadic parameter(s)
                 if (!$param->isVariadic()) {
                     // TODO is there any benefit in using a generator here? probably not.
@@ -330,5 +324,42 @@ final class WireInvoker implements Invoker, Constructor
             // throw otherwise
             throw new UnresolvableArgument($param->getName());
         };
+    }
+
+    /**
+     * Exposes the internal container to a callable.
+     * A public getter for the container instance is not provided by design.
+     *
+     * @param callable $worker function(ContainerInterface $container)
+     * @return mixed forwards the return value of the callable
+     */
+    public function exposeContainer(callable $worker): mixed
+    {
+        return $worker($this->container, $this);
+    }
+
+    /**
+     * Create an instance of Genie
+     * by passing either a Lamp or a container implementation instance.
+     *
+     * The rest of the parameters are the same as the constructor's.
+     * @see Genie::__construct()
+     *
+     * @param Lamp|Container $source
+     * @param callable|null $resolver
+     * @param callable|null $detector
+     * @param callable|null $mapper
+     * @return self
+     */
+    public static function equip(
+        Lamp|Container $source,
+        ?callable $resolver = null,
+        ?callable $detector = null,
+        ?callable $mapper = null
+    ): self {
+        $worker = function (Container $container) use ($resolver, $detector, $mapper) {
+            return new self($container, $resolver, $detector, $mapper);
+        };
+        return $source instanceof Lamp ? $source->exposeContainer($worker) : $worker($source);
     }
 }

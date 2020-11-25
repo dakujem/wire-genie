@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Dakujem\Wire;
 
 use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface as Container;
 
 /**
  * Magic Lamp. If you rub it thoroughly, something might come out.
@@ -32,12 +32,8 @@ final class Lamp
 {
     use PredictableAccess;
 
-    /** @var ContainerInterface */
-    private $container;
-
-    public function __construct(ContainerInterface $container)
+    public function __construct(private Container $container)
     {
-        $this->container = $container;
     }
 
     /**
@@ -101,8 +97,22 @@ final class Lamp
      * @param callable $worker function(ContainerInterface $container)
      * @return mixed forwards the return value of the callable
      */
-    public function exposeContainer(callable $worker)
+    public function exposeContainer(callable $worker): mixed
     {
         return $worker($this->container, $this);
+    }
+
+    /**
+     * Create an instance of Lamp
+     * by passing either a Genie or a container implementation instance.
+     *
+     * @param Genie|Container $source
+     * @return self
+     */
+    public static function equip(Genie|Container $source): self
+    {
+        return $source instanceof Genie ? $source->exposeContainer(function (Container $container) {
+            return new self($container);
+        }) : new self($source);
     }
 }

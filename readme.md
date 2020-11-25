@@ -65,7 +65,7 @@ $provider = $wireGenie->provide( Dependency::class, OtherDependency::class, ... 
 $service = $provider->invoke($factory);
 ```
 
-With [`WireInvoker`](src/WireInvoker.php) it is possible to omit specifying
+With [`WireInvoker`](src/Genie.php) it is possible to omit specifying
 the dependencies and use **automatic dependency wiring**:
 ```php
 // invoke the factory without specifying dependencies, using an automatic provider
