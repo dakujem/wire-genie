@@ -7,12 +7,15 @@
 
 > 💿 `composer require dakujem/wire-genie`
 
+
 ## TODOs
 
 - [ ] namespace
 - [ ] deprecations
 - [ ] docs
 - [ ] compatibility (for annotations/wire tags)
+- [ ] changelog / migration guide
+- [ ] split package for "providers" (static genie, provider, interfaces, limiter)? (`d\Contain`, `d\Deal`, `d\Dispense`)
 
 ```
 d\Wire\Invoker (interface)
@@ -24,9 +27,13 @@ d\Wire\PredictableAccess
 d\Wire\Exceptions\ServiceNotWhitelisted (make LimiterException into an interface for compat.)
 d\Wire\Exceptions\ArgumentNotAvailable
 
-d\Wire\Genie (will contain the new "wireInvoker")
-d\Wire\Lamp (will contain the "WireGenie" from v1) if you rub it thoroughly, something might come out
+d\Wire\Genie (will contain the new "WireInvoker")
+d\Wire\EagerGenie (will contain the "WireGenie" from v1)
 ~~~~d\Wire\WireFrame ( /grid/solder/iron ...  from WireInvoker)~~~
+
+Coming soon:
+Magic Lamp - if you rub it thoroughly, something might come out
+Flying Carpet
 
 + autoload compat loader
 ```
@@ -45,7 +52,7 @@ Allows to
 
 ## How it works
 
-[`WireGenie`](src/Lamp.php) is rather simple,
+[`WireGenie`](src/EagerGenie.php) is rather simple,
 it fetches specified dependencies from a container
 and passes them to a callable, invoking it and returning the result.
 

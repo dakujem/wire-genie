@@ -135,20 +135,21 @@ final class Genie implements Invoker, Constructor
 
     /**
      * Create an instance of Genie
-     * by passing either a Lamp or a container implementation instance.
+     * by passing either a EagerGenie or a container implementation instance.
      *
      * See the constructor for parameter explanation.
      * @see Genie::__construct()
      *
-     * @param Lamp|Container $source
+     * @param EagerGenie|self|Container $source
      * @param callable|null $core
      * @return self
      */
-    public static function equip(Lamp|Container $source, ?callable $core = null): self
+    public static function employ(EagerGenie|self|Container $source, ?callable $core = null): self
     {
         $worker = function (Container $container) use ($core): self {
             return new self($container, $core);
         };
-        return $source instanceof Lamp ? $source->exposeContainer($worker) : $worker($source);
+        return $source instanceof EagerGenie || $source instanceof self ?
+            $source->exposeContainer($worker) : $worker($source);
     }
 }
