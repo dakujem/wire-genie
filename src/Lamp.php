@@ -4,25 +4,31 @@ declare(strict_types=1);
 
 namespace Dakujem\Wire;
 
+use Psr\Container\ContainerInterface as Container;
+
 /**
- * Wonderful Magic Lamp - if you rub it thoroughly, something might come out...
+ * The Wonderful Lamp 🪔 - if you rub it thoroughly, something might come out...
  *
  * @author Andrej Rypak <xrypak@gmail.com>
  */
 final class Lamp
 {
+    use PredictableAccess;
+
+    private $core;
+
+    public function __construct(
+        private Container $container,
+        ?callable $core = null,
+    ) {
+        $this->core = $core;
+    }
 
     /**
-     * Depending on how this is called,
-     *
-     * @param mixed ...$args
-     * @return Genie|Provider callable
+     * @return Genie 🧞
      */
-    public function rub(...$args): callable
+    public function rub(): Genie
     {
-        if ($args === []) {
-            return new Genie($this->container);
-        }
-        return (new EagerGenie($this->container))->provide(...$args);
+        return new Genie($this->container, $this->core);
     }
 }

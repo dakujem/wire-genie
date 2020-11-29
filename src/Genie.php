@@ -9,14 +9,15 @@ use Dakujem\Wire\Exceptions\UnresolvableCallArguments;
 use Psr\Container\ContainerInterface as Container;
 
 /**
- * Wire Genie - a magical invoker of callables and constructor of classes.
+ * Wire Genie - a magical invoker of callables and constructor of classes. Also provides wishes.
  *
  * By default, it uses the reflection API and leverages PHP 8 attributes, but can be configured otherwise.
  *
- * The class revolves around two methods and the default resolver strategy:
+ * The class revolves around three methods and the default resolver strategy:
  * @see DefaultResolverStrategy
  * @see Genie::invoke()
  * @see Genie::construct()
+ * @see Genie::provide()
  *
  * @author Andrej Rypák (dakujem) <xrypak@gmail.com>
  */
@@ -97,6 +98,25 @@ final class Genie implements Invoker, Constructor
     }
 
     /**
+     * Directly resolves given explicit identifiers using the container and returns an invoker.
+     * The invoker can then be used to invoke other callables,
+     * passing the resolved services as arguments to each invocation.
+     *
+     * When a dependency is not present in the container, it is resolved to null instead.
+     *
+     * @param string ...$services list of identifiers for the container to resolve
+     * @return Provider callable
+     */
+    public function provide(...$services): callable
+    {
+        $resolved = array_map(
+            fn($identifier) => $this->container->has($identifier) ? $this->container->get($identifier) : null,
+            $services
+        );
+        return new Provider(...$resolved);
+    }
+
+    /**
      * Works like this:
      * - a detector produces a list of parameters to be resolved, given a function or a class name
      * - the list is passed to a mapper that will map it to a list of arguments
@@ -125,7 +145,7 @@ final class Genie implements Invoker, Constructor
      * Exposes the internal container to a callable.
      * A public getter for the container instance is not provided by design.
      *
-     * @param callable $worker function(ContainerInterface $container)
+     * @param callable $worker fn(Container):mixed
      * @return mixed forwards the return value of the callable
      */
     public function exposeContainer(callable $worker): mixed
@@ -134,22 +154,15 @@ final class Genie implements Invoker, Constructor
     }
 
     /**
-     * Create an instance of Genie
-     * by passing either a EagerGenie or a container implementation instance.
-     *
-     * See the constructor for parameter explanation.
+     * Create an instance statically.
      * @see Genie::__construct()
      *
-     * @param EagerGenie|self|Container $source
+     * @param self|Container $source
      * @param callable|null $core
      * @return self
      */
-    public static function employ(EagerGenie|self|Container $source, ?callable $core = null): self
+    public static function employ(Container|self $source, ?callable $core = null): self
     {
-        $worker = function (Container $container) use ($core): self {
-            return new self($container, $core);
-        };
-        return $source instanceof EagerGenie || $source instanceof self ?
-            $source->exposeContainer($worker) : $worker($source);
+        return new self($source instanceof self ? $source->container : $source, $core);
     }
 }

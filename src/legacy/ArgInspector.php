@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Dakujem;
 
-use Dakujem\Wire\Attributes\Attribute;
 use Dakujem\Wire\Inspector;
-use ReflectionAttribute;
 use ReflectionException;
 use ReflectionFunctionAbstract as FunctionRef;
 use ReflectionNamedType;
@@ -39,35 +37,6 @@ final class ArgInspector
     {
         return function (?FunctionRef $reflection) use ($paramDetector): array {
             return $reflection !== null ? static::detectTypes($reflection, $paramDetector) : [];
-        };
-    }
-
-    /**
-     * Returns a reflection-based detector that only detects using the attributes.
-     *
-     * Usage:
-     *  new WireInvoker($container, ArgInspector::attributeDetector())
-     *
-     * @param string $tag defaults to "wire"; only alphanumeric characters should be used; case insensitive
-     * @return callable
-     */
-    public static function attributeDetector(): callable
-    {
-        return static::typeDetector(static::attributeReader(false));
-    }
-
-    public static function attributeReader(bool $defaultToTypeHint = true): callable
-    {
-        return function (ParamRef $param) use ($defaultToTypeHint): string|array|null {
-            //
-            // TODO
-            //
-            $attrs = $param->getAttributes(Attribute::class, ReflectionAttribute::IS_INSTANCEOF);
-
-            // now what? how do i tell the compiler to construct the service once the service container fails?
-
-            // omit empty annotations - empty wire tag indicates "no wiring"
-            return $typeByAttribute ?? ($defaultToTypeHint ? static::typeHintOf($param) : null);
         };
     }
 

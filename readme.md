@@ -10,7 +10,7 @@
 
 ## TODOs
 
-- [ ] namespace
+- [x] namespace
 - [ ] deprecations
 - [ ] docs
 - [ ] compatibility (for annotations/wire tags)
@@ -27,12 +27,10 @@ d\Wire\PredictableAccess
 d\Wire\Exceptions\ServiceNotWhitelisted (make LimiterException into an interface for compat.)
 d\Wire\Exceptions\ArgumentNotAvailable
 
-d\Wire\Genie (will contain the new "WireInvoker")
-d\Wire\EagerGenie (will contain the "WireGenie" from v1)
-~~~~d\Wire\WireFrame ( /grid/solder/iron ...  from WireInvoker)~~~
+d\Wire\Genie (will contain the new "WireInvoker" and the `provide` function from the "WireGenie" of v1)
 
 Coming soon:
-Magic Lamp - if you rub it thoroughly, something might come out
+Magic Lamp - there is zero added value in using this class, but it fits the theme...
 Flying Carpet
 
 + autoload compat loader

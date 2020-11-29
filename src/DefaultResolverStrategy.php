@@ -33,6 +33,8 @@ use ReflectionUnionType;
  */
 final class DefaultResolverStrategy
 {
+    use PredictableAccess;
+
     /** @var callable|null */
     private $resolver;
 
