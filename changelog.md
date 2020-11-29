@@ -41,7 +41,7 @@ function(#[Wire('identifier')] $service1, #[Skip] $service2) { ... }
 Breaking changes:
 - methods `WireGenie::provideSafe` and `WireGenie::provideStrict` removed
 - renamed classes and namespace altered (added one level of nesting)
-- `WireInvoker` and `WireGenie` have been merged to the `Genie` class, which now assumed the functionality of both
+- `WireInvoker` and `WireGenie` have been merged to the `Genie` class, which assumed the functionality of both
 
 Renamed classes
 
@@ -68,7 +68,20 @@ Runtime exceptions are now based on `Dakujem\Wire\Exceptions\Unresolvable` excep
 Needed:
 1. Replace any usage of `WireGenie::provideSafe` with `Genie::provide`.
 2. Replace any usage of `WireGenie::provideStrict` with `Genie::provide`, remove "nullability" of the code being invoked where applicable.
+3. In case your code uses more than 1 argument when constructing the `WireInvoker` class
+   (either via the constructor or the `WireInvoker::employ` method),
+   meaning you are using a custom detector/reflector/proxy,
+   you need to construct a wiring strategy and pass it to the `Genie` constructor/employ method instead:
+   ```php
+   // old code
+   new WireInvoker($container, $myDetector, $myProxy, $myReflector);
+   WireInvoker::employ($wireGenie, $myDetector, $myProxy, $myReflector);
+   
+   // new code
+   new Genie($container, new CompoundResolverStrategy($myDetector, $myProxy, $myReflector));
+   Genie::employ($wireGenie, new CompoundResolverStrategy($myDetector, $myProxy, $myReflector));
+   ```
 
 Recommended:
-1. Update the namespaces / `use` statements of all classes in use, see the "Renamed classes" table above.
+1. Update the namespaces / `use` statements for all classes in use, see the "Renamed classes" table above.
 
