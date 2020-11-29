@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Dakujem\Tests;
+namespace Dakujem\Wire\Tests;
 
 use Dakujem\ArgInspector;
 use PHPUnit\Framework\TestCase;

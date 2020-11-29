@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Dakujem\Tests;
+namespace Dakujem\Wire\Tests;
 
 use Dakujem\Wire\Simpleton;
 use PHPUnit\Framework\TestCase;
@@ -12,7 +12,7 @@ use stdClass;
 /**
  * @internal test
  */
-final class InvokableProviderTest extends TestCase
+final class SimpletonTest extends TestCase
 {
     public function testCallable(): void
     {
@@ -66,7 +66,7 @@ final class InvokableProviderTest extends TestCase
         $instance3 = new ReflectionClass(Simpleton::class);
         $ip = new Simpleton($instance1, $instance2, $instance3, 42);
 
-        $this->assertIsCallable($ip, 'InvokableProvider is not callable.');
+        $this->assertIsCallable($ip, 'Simpleton is not callable.');
 
         $hasBeenInvokedTwice = 0;
         $ip->invoke(function ($arg1, $arg2, $arg3, $scalar) use (

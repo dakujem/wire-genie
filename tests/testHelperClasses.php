@@ -1,9 +1,9 @@
 <?php
 
-namespace Dakujem\Tests;
+namespace Dakujem\Wire\Tests;
 
 use Dakujem\Sleeve;
-use Dakujem\WireGenie;
+use Dakujem\Wire\Genie;
 use Error;
 use Psr\Container\ContainerInterface;
 use ReflectionClass;
@@ -20,14 +20,14 @@ class ContainerProvider
         $sleeve->set('self', $sleeve);
 
         $sleeve->set('genie', function (Sleeve $container) {
-            return new WireGenie($container);
+            return new Genie($container);
         });
-        $sleeve->set(WireGenie::class, function (Sleeve $container) {
-            return new WireGenie($container);
+        $sleeve->set(Genie::class, function (Sleeve $container) {
+            return new Genie($container);
         });
 
         $sleeve->set('ref1', function () {
-            return new ReflectionClass(WireGenie::class);
+            return new ReflectionClass(Genie::class);
         });
 
         $sleeve->set(Error::class, $sleeve->factory(function () {

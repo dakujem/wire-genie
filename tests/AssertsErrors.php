@@ -1,6 +1,6 @@
 <?php
 
-namespace Dakujem\Tests;
+namespace Dakujem\Wire\Tests;
 
 /**
  * AssertsErrors

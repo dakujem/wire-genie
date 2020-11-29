@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace Dakujem\Tests;
+namespace Dakujem\Wire\Tests;
 
-use Dakujem\WireLimiter;
-use Dakujem\WireLimiterException;
+use Dakujem\Wire\Exceptions\ServiceNotWhitelisted;
+use Dakujem\Wire\Limiter;
 use Error;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerExceptionInterface;
@@ -20,7 +20,7 @@ final class WireLimiterTest extends TestCase
     public function testThrow(): void
     {
         $sleeve = ContainerProvider::createContainer();
-        $wl = new WireLimiter($sleeve, [
+        $wl = new Limiter($sleeve, [
             Error::class, // only allow to return Errors :-)
         ]);
         $this->expectException(ContainerExceptionInterface::class);
@@ -30,17 +30,17 @@ final class WireLimiterTest extends TestCase
     public function testThrowWireLimiterException(): void
     {
         $sleeve = ContainerProvider::createContainer();
-        $wl = new WireLimiter($sleeve, [
+        $wl = new Limiter($sleeve, [
             Error::class, // only allow to return Errors :-)
         ]);
-        $this->expectException(WireLimiterException::class);
+        $this->expectException(ServiceNotWhitelisted::class);
         $wl->get('genie');
     }
 
     public function testReturnCorrectly(): void
     {
         $sleeve = ContainerProvider::createContainer();
-        $wl = new WireLimiter($sleeve, [
+        $wl = new Limiter($sleeve, [
             Error::class, // only allow to return Errors :-)
         ]);
         $this->assertTrue($wl->get(Error::class) instanceof Error);
@@ -49,7 +49,7 @@ final class WireLimiterTest extends TestCase
     public function testLimitdoesNotAffectHas(): void
     {
         $sleeve = ContainerProvider::createContainer();
-        $wl = new WireLimiter($sleeve, [
+        $wl = new Limiter($sleeve, [
             Error::class, // only allow to return Errors :-)
         ]);
         // limiting does not affect the has method
@@ -60,11 +60,11 @@ final class WireLimiterTest extends TestCase
     public function testLimiterWithEmptyWhitelistWillRefuseToReturnAnything(): void
     {
         $sleeve = ContainerProvider::createContainer();
-        $wl = new WireLimiter($sleeve, []);
-        $this->throws(WireLimiterException::class, function () use ($wl) {
+        $wl = new Limiter($sleeve, []);
+        $this->throws(ServiceNotWhitelisted::class, function () use ($wl) {
             $wl->get('genie');
         });
-        $this->throws(WireLimiterException::class, function () use ($wl) {
+        $this->throws(ServiceNotWhitelisted::class, function () use ($wl) {
             $wl->get(Error::class);
         });
         $this->throws(ContainerExceptionInterface::class, function () use ($wl) {

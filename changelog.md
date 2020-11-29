@@ -17,7 +17,7 @@ The compatibility layer present in v2 was removed.\
 All deprecated classes and methods have been removed.
 
 The default strategy for argument type detection is now based on _native attributes_,
-but is very close to the one based on annotations (in comments) function-wise.
+but is almost identical to the one based on doc-comment annotations, function-wise.
 
 
 ### Migrating to v3 from v2
