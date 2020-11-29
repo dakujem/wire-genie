@@ -12,7 +12,7 @@ use Psr\Container\ContainerInterface;
  *
  * Usage:
  *   $limitedContainer = new Limiter( $fullContainer, [ WhitelistOnlyThisInterface::class ] );
- *   new EagerGenie( $limitedContainer );
+ *   new Genie( $limitedContainer );
  *
  * @author Andrej Rypák (dakujem) <xrypak@gmail.com>
  */

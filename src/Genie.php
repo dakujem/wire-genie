@@ -6,6 +6,7 @@ namespace Dakujem\Wire;
 
 use Dakujem\Wire\Exceptions\Unresolvable;
 use Dakujem\Wire\Exceptions\UnresolvableCallArguments;
+use LogicException;
 use Psr\Container\ContainerInterface as Container;
 
 /**
@@ -14,7 +15,7 @@ use Psr\Container\ContainerInterface as Container;
  * By default, it uses the reflection API and leverages PHP 8 attributes, but can be configured otherwise.
  *
  * The class revolves around three methods and the default resolver strategy:
- * @see DefaultResolverStrategy
+ * @see AttributeBasedResolverStrategy
  * @see Genie::invoke()
  * @see Genie::construct()
  * @see Genie::provide()
@@ -39,7 +40,7 @@ final class Genie implements Invoker, Constructor
      * the callable (or constructor) parameter types are detected using the PHP's reflection API.
      * Then, each of the parameters is mapped to an argument for the invocation,
      * leveraging the reflection API and PHP 8 attributes.
-     * @see DefaultResolverStrategy
+     * @see AttributeBasedResolverStrategy
      *
      * The process can be altered not to work with reflection or attributes,
      * it's all up to the resolver strategy.
@@ -84,9 +85,30 @@ final class Genie implements Invoker, Constructor
     }
 
     /**
+     * Provide a fellow invoker with a set of services.
+     *
+     * Directly resolves given identifiers using the container and returns an invoker.
+     * The invoker can then be used to invoke other callables,
+     * passing the resolved services as arguments to each invocation.
+     *
+     * When a dependency is not present in the container, it is resolved to `null` instead.
+     *
+     * @param string ...$services list of identifiers for the container to resolve
+     * @return Simpleton callable invoker implementation
+     */
+    public function provide(...$services): callable // TODO or "equip"? + interface supplier/provider ?
+    {
+        $resolved = array_map(
+            fn($identifier) => $this->container->has($identifier) ? $this->container->get($identifier) : null,
+            $services
+        );
+        return new Simpleton(...$resolved);
+    }
+
+    /**
      * This provider instances are also callable.
      *
-     * @param callable|string $target callable to be invoked or a name of a class to be constructed.
+     * @param callable|string $target callable to be invoked or the name of a class to be constructed.
      * @param mixed ...$staticArgs static argument pool
      * @return mixed result of the $target callable invocation or an instance of the requested class
      */
@@ -95,25 +117,6 @@ final class Genie implements Invoker, Constructor
         return is_string($target) && class_exists($target) ?
             $this->construct($target, ...$staticArgs) :
             $this->invoke($target, ...$staticArgs);
-    }
-
-    /**
-     * Directly resolves given explicit identifiers using the container and returns an invoker.
-     * The invoker can then be used to invoke other callables,
-     * passing the resolved services as arguments to each invocation.
-     *
-     * When a dependency is not present in the container, it is resolved to null instead.
-     *
-     * @param string ...$services list of identifiers for the container to resolve
-     * @return Provider callable
-     */
-    public function provide(...$services): callable
-    {
-        $resolved = array_map(
-            fn($identifier) => $this->container->has($identifier) ? $this->container->get($identifier) : null,
-            $services
-        );
-        return new Provider(...$resolved);
     }
 
     /**
@@ -131,7 +134,7 @@ final class Genie implements Invoker, Constructor
     private function resolveArguments(callable|string $target, ...$staticArguments): iterable
     {
         try {
-            return ($this->core ?? new DefaultResolverStrategy())(
+            return ($this->core ?? new AttributeBasedResolverStrategy())(
                 $this,
                 $target,
                 ...$staticArguments,
@@ -164,5 +167,26 @@ final class Genie implements Invoker, Constructor
     public static function employ(Container|self $source, ?callable $core = null): self
     {
         return new self($source instanceof self ? $source->container : $source, $core);
+    }
+
+    /**
+     * @deprecated Back Compatibility only, will be removed in v3.
+     */
+    public function __call(string $name, array $arguments)
+    {
+        if ($name === 'provideSafe') {
+            throw new LogicException(sprintf(
+                'The method `%s` was removed, use `provide` instead.',
+                $name
+            ));
+        }
+        if ($name === 'provideStrict') {
+            throw new LogicException(sprintf(
+                'The method `%s` was removed, use `provide` instead. ' .
+                'The method was redundant, as using type hints properly yields same functionality.',
+                $name
+            ));
+        }
+        throw new LogicException(sprintf('Call to undefined method %s::%s', static::class, $name));
     }
 }

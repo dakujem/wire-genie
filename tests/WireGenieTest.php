@@ -2,8 +2,8 @@
 
 namespace Dakujem\Tests;
 
-use Dakujem\Provider;
 use Dakujem\Invoker;
+use Dakujem\Wire\Simpleton;
 use Dakujem\WireGenie;
 use Dakujem\WireLimiter;
 use PHPUnit\Framework\TestCase;
@@ -21,7 +21,7 @@ final class WireGenieTest extends TestCase
         $sleeve = ContainerProvider::createContainer();
         $wg = new WireGenie($sleeve);
 
-        $this->assertTrue($wg->provide() instanceof Provider);
+        $this->assertTrue($wg->provide() instanceof Simpleton);
     }
 
     public function testProvisioning()
@@ -37,31 +37,31 @@ final class WireGenieTest extends TestCase
         ], $p);
     }
 
-    public function testStrictProvisioning()
-    {
-        $sleeve = ContainerProvider::createContainer();
-        $wg = new WireGenie($sleeve);
-
-        $p = $wg->provideStrict('ref1', 'genie', WireGenie::class);
-        $this->check([
-            $sleeve->get('ref1'),
-            $sleeve->get('genie'),
-            $sleeve->get(WireGenie::class),
-        ], $p);
-    }
-
-    public function testSafeProvisioning()
-    {
-        $sleeve = ContainerProvider::createContainer();
-        $wg = new WireGenie($sleeve);
-
-        $p = $wg->provideSafe('ref1', 'genie', WireGenie::class);
-        $this->check([
-            $sleeve->get('ref1'),
-            $sleeve->get('genie'),
-            $sleeve->get(WireGenie::class),
-        ], $p);
-    }
+//    public function testStrictProvisioning()
+//    {
+//        $sleeve = ContainerProvider::createContainer();
+//        $wg = new WireGenie($sleeve);
+//
+//        $p = $wg->provideStrict('ref1', 'genie', WireGenie::class);
+//        $this->check([
+//            $sleeve->get('ref1'),
+//            $sleeve->get('genie'),
+//            $sleeve->get(WireGenie::class),
+//        ], $p);
+//    }
+//
+//    public function testSafeProvisioning()
+//    {
+//        $sleeve = ContainerProvider::createContainer();
+//        $wg = new WireGenie($sleeve);
+//
+//        $p = $wg->provideSafe('ref1', 'genie', WireGenie::class);
+//        $this->check([
+//            $sleeve->get('ref1'),
+//            $sleeve->get('genie'),
+//            $sleeve->get(WireGenie::class),
+//        ], $p);
+//    }
 
     public function testNullResolution()
     {
@@ -75,23 +75,23 @@ final class WireGenieTest extends TestCase
         ], $p);
     }
 
-    public function testStrictThrow()
-    {
-        $sleeve = ContainerProvider::createContainer();
-        $wg = new WireGenie($sleeve);
-
-        $this->expectException(NotFoundExceptionInterface::class);
-        $wg->provideStrict('unknown', 'genie');  // this would NOT have thrown if using `provide`
-    }
-
-    public function testSafeNullResolution()
-    {
-        $sleeve = ContainerProvider::createContainer();
-        $wg = new WireGenie(new WireLimiter($sleeve, []));
-
-        $p = $wg->provideSafe('unknown', 'genie'); // this would have thrown if using either `provide` or `provideStrict`
-        $this->check([null, null,], $p);
-    }
+//    public function testStrictThrow()
+//    {
+//        $sleeve = ContainerProvider::createContainer();
+//        $wg = new WireGenie($sleeve);
+//
+//        $this->expectException(NotFoundExceptionInterface::class);
+//        $wg->provideStrict('unknown', 'genie');  // this would NOT have thrown if using `provide`
+//    }
+//
+//    public function testSafeNullResolution()
+//    {
+//        $sleeve = ContainerProvider::createContainer();
+//        $wg = new WireGenie(new WireLimiter($sleeve, []));
+//
+//        $p = $wg->provideSafe('unknown', 'genie'); // this would have thrown if using either `provide` or `provideStrict`
+//        $this->check([null, null,], $p);
+//    }
 
     public function testThrow()
     {

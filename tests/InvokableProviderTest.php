@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Dakujem\Tests;
 
-use Dakujem\Provider;
+use Dakujem\Wire\Simpleton;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use stdClass;
@@ -16,9 +16,9 @@ final class InvokableProviderTest extends TestCase
 {
     public function testCallable(): void
     {
-        $ip = new Provider();
+        $ip = new Simpleton();
 
-        $this->assertIsCallable($ip, 'InvokableProvider is not callable.');
+        $this->assertIsCallable($ip, 'Simpleton is not callable.');
 
         $hasBeenCalled = false;
         $ip(function () use (&$hasBeenCalled) {
@@ -37,7 +37,7 @@ final class InvokableProviderTest extends TestCase
 
     public function testInvoked(): void
     {
-        $ip = new Provider();
+        $ip = new Simpleton();
 
         $hasBeenCalled = false;
         $ip(function () use (&$hasBeenCalled) {
@@ -49,7 +49,7 @@ final class InvokableProviderTest extends TestCase
 
     public function testInvokedUsingMethodInvoke(): void
     {
-        $ip = new Provider();
+        $ip = new Simpleton();
 
         $hasBeenCalled = false;
         $ip->invoke(function () use (&$hasBeenCalled) {
@@ -63,8 +63,8 @@ final class InvokableProviderTest extends TestCase
     {
         $instance1 = new stdClass();
         $instance2 = new stdClass();
-        $instance3 = new ReflectionClass(Provider::class);
-        $ip = new Provider($instance1, $instance2, $instance3, 42);
+        $instance3 = new ReflectionClass(Simpleton::class);
+        $ip = new Simpleton($instance1, $instance2, $instance3, 42);
 
         $this->assertIsCallable($ip, 'InvokableProvider is not callable.');
 

@@ -3,7 +3,7 @@
 ![PHP from Packagist](https://img.shields.io/packagist/php-v/dakujem/wire-genie)
 [![Build Status](https://travis-ci.org/dakujem/wire-genie.svg?branch=master)](https://travis-ci.org/dakujem/wire-genie)
 
-**Dependency Provider & Autowiring Tool** for PSR-11 service containers.
+**Autowiring Tool & Dependency Provider** for PSR-11 service containers.
 
 > 💿 `composer require dakujem/wire-genie`
 
@@ -11,11 +11,12 @@
 ## TODOs
 
 - [x] namespace
-- [ ] deprecations
+- [x] deprecations
 - [ ] docs
 - [ ] compatibility (for annotations/wire tags)
 - [ ] changelog / migration guide
-- [ ] split package for "providers" (static genie, provider, interfaces, limiter)? (`d\Contain`, `d\Deal`, `d\Dispense`)
+- [x] REJECTED split package for "providers" (provider, limiter)? (`d\Contain`, `d\Deal`, `d\Dispense`)
+- [ ] TODOs in code
 
 ```
 d\Wire\Invoker (interface)
@@ -55,19 +56,22 @@ it fetches specified dependencies from a container
 and passes them to a callable, invoking it and returning the result.
 
 ```php
-// create a WireGenie instance using any PSR-11 service container
-$wireGenie = new WireGenie($container);
+// create a Genie instance using any PSR-11 service container
+$genie = new Genie($container);
 
-$factory = function( Dependency $dep1, OtherDependency $dep2, ... ){
-    // create stuff...
-    return new Service($dep1, $dep2, ... );
+$factory = function( Dependency $dep1, OtherDependency $dep2 ){
+    // class MyObject ( Dependency $dep1, OtherDependency $dep2 ) { ... }
+    return new MyObject($dep1, $dep2, ... );
 };
 
-// create a provider, explicitly specifying dependencies
-$provider = $wireGenie->provide( Dependency::class, OtherDependency::class, ... );
+// 1. invoking the factory, leaving Genie to wire the dependencies
+$object = $genie->invoke($factory);
 
-// invoke the factory using the provider
-$service = $provider->invoke($factory);
+// 2. letting Genie to construct the object on its own
+$object = $genie->construct(MyObject::class);
+
+// 3. invoking the factory, explicitly specifying dependencies
+$object = $genie->provide( Dependency::class, OtherDependency::class )->invoke($factory);
 ```
 
 With [`WireInvoker`](src/Genie.php) it is possible to omit specifying
@@ -86,13 +90,10 @@ at runtime and then provide dependencies to the callable.
 Note that _how_ services in the container are accessed depends on the conventions used.\
 Services might be accessed by plain string keys, class names or interface names.
 
-`WireGenie` simply calls methods of [PSR-11 Container](https://www.php-fig.org/psr/psr-11/)
-`ContainerInterface::get()` and `ContainerInterface::has()` under the hood,
-there is no other "magic".
-
-Consider a basic service container ([Sleeve](https://github.com/dakujem/sleeve)) and the different conventions:
+Consider a basic key-value service container ([Sleeve](https://github.com/dakujem/sleeve)) and the different conventions:
 ```php
 $sleeve = new Sleeve();
+
 // using a plain string identifier
 $sleeve->set('genie', function (Sleeve $container) {
     return new WireGenie($container);
@@ -117,9 +118,14 @@ $sleeve->get('self');
 $sleeve->get(ContainerInterface::class);
 ```
 
-Different service containers expose services differently.
-Some offer both conventions, some offer only one.\
-It is important to understand how _your_ container exposes the services to fully leverage `WireGenie` and `WireInvoker`.
+There is no magic in how the services are fetched from the service container:
+the two methods of [PSR-11 Container](https://www.php-fig.org/psr/psr-11/),
+`ContainerInterface::get()` and `ContainerInterface::has()` are called.
+
+However, different service containers offer different features.\
+Some will seamlessly provide the option to retrieve a service by its class or interface name,
+other will only return the services by the keys used for their registration.\
+It is important to understand how _your_ container exposes the services to fully leverage this package.
 
 
 ## Basic usage
@@ -380,6 +386,16 @@ that resolve the dependencies at the moment of their call and only once,
 regardless of how many callables are invoked by the provider returned by the methods.
 
 
+## Testing
+
+Run unit tests using the following command:
+
+`$` `composer test`\
+or\
+`$` `php vendor/phpunit/phpunit/phpunit tests`
+
+
 ## Contributing
 
-Ideas or contribution is welcome. Please send a PR or file an issue.
+Ideas, feature requests and other contribution is welcome.
+Please send a PR or create an issue.

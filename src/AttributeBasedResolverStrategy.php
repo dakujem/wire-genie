@@ -19,7 +19,7 @@ use ReflectionParameter as ParamRef;
 use ReflectionUnionType;
 
 /**
- * The default resolver strategy.
+ * The default resolver strategy based on reflection and native attributes.
  * Callable.
  * fn(Genie, callable|string, ...):iterable
  *
@@ -31,7 +31,7 @@ use ReflectionUnionType;
  *
  * @author Andrej Rypak <xrypak@gmail.com>
  */
-final class DefaultResolverStrategy
+final class AttributeBasedResolverStrategy
 {
     use PredictableAccess;
 

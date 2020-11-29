@@ -18,5 +18,5 @@ interface Constructor
      * @param string $target class name of a class to be instantiated
      * @return mixed an instance of the target class
      */
-    public function construct(string $target);
+    public function construct(string $target): mixed;
 }

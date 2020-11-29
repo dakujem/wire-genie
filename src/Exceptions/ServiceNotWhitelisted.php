@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Dakujem\Wire\Exceptions;
 
-use Dakujem\WireLimiterException;
 use Psr\Container\ContainerExceptionInterface;
 use RuntimeException;
 use Throwable;
@@ -14,7 +13,7 @@ use Throwable;
  *
  * @author Andrej Rypak <xrypak@gmail.com>
  */
-class ServiceNotWhitelisted extends RuntimeException implements ContainerExceptionInterface, WireLimiterException
+class ServiceNotWhitelisted extends RuntimeException implements ContainerExceptionInterface
 {
     public function __construct($message = null, $code = 0, Throwable $previous = null)
     {

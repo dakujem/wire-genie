@@ -21,7 +21,7 @@
       "Dakujem\\Wire\\": "src/",
       "Dakujem\\": "src/legacy/"
     },
-    "classmap": ["src/"]
+    "files": ["src/legacy/compat.php"]
   },
   "scripts": {
     "test": "phpunit tests"
