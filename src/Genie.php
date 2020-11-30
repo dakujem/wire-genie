@@ -120,12 +120,8 @@ final class Genie implements Invoker, Constructor
     }
 
     /**
-     * Works like this:
-     * - a detector produces a list of parameters to be resolved, given a function or a class name
-     * - the list is passed to a mapper that will map it to a list of arguments
-     * - the default mapper will iterate over the list of parameters and pass each item to the resolver
-     *   along with the container instance and the next static argument
-     * - the resolver is expected to return a value to be used as argument for each given parameter
+     * Uses a strategy to produce an iterable of arguments.
+     * Either uses the strategy passed into the constructor or falls back to the default one.
      *
      * @param callable|string $target a callable to be invoked or a name of a class to be constructed
      * @param mixed ...$staticArguments static arguments to fill in for parameters where identifier can not be detected

@@ -1,17 +1,16 @@
-# Wire Genie 🧞
+# Changelog & Migration guide
 
 | Wire Genie branch | Supported PHP versions |
 |:------------------|:-----------------------|
-| `1.x` | 7.2, 7.3, 7.4, 8.0 |
-| `2.x` | 7.2, 7.3, 7.4, 8.0+ |
 | `3.x` | 8.0+ (with native attributes support) |
+| `2.x` | 7.2, 7.3, 7.4, 8.0+ |
+| `1.x` | 7.2, 7.3, 7.4, 8.0 |
 
-## Changelog
 
 
-### v3 (PHP 8 only)
+## v3
 
-This version requires PHP 8+.
+> This version requires **PHP 8+**.
 
 The compatibility layer present in v2 was removed.\
 All deprecated classes and methods have been removed.
@@ -36,7 +35,7 @@ function(#[Wire('identifier')] $service1, #[Skip] $service2) { ... }
 ```
 
 
-### v2
+## v2
 
 Breaking changes:
 - methods `WireGenie::provideSafe` and `WireGenie::provideStrict` removed

@@ -64,12 +64,21 @@ final class AttributeBasedStrategy
     }
 
     /**
-     * @param callable $detector a callable used to detect parameters of a callable or class constructor;
+     * Returns a strategy for Genie instances. The strategy is a callable that returns an iterable upon invocation.
+     * fn(Genie, callable|string $target, ...$staticArgs): iterable
+     *
+     * The core works like this:
+     * - a detector produces a list of parameters (parameter reflections by default), given a function or a class name
+     * - the core iterates over the list of parameters and passes each item to the resolver
+     *   along with the container instance and the next-static-argument callable
+     * - the resolver is expected to return a value to be used as argument for each given parameter
+     *
+     * @param callable $detector the callable used to detect parameters of a callable or class constructor;
      *                           each of the parameters is passed to the $resolver;
      *                           function(callable|string):iterable
-     * @param callable $resolver a callable that resolves each parameter into a respective argument;
+     * @param callable $resolver the callable that resolves each parameter into a respective argument;
      *                           function(mixed $param, Container, callable $staticArgument): mixed
-     * @return callable default strategy for the Genie class
+     * @return callable strategy for Genie class
      */
     public static function core(callable $detector, callable $resolver): callable
     {
