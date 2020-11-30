@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Dakujem\Wire;
 
-use Dakujem\ArgInspector;
 use Psr\Container\ContainerInterface as Container;
 use ReflectionException;
 use ReflectionFunctionAbstract as FunctionRef;
@@ -13,6 +12,8 @@ use ReflectionParameter as ParamRef;
 use ReflectionUnionType;
 
 /**
+ * @deprecated in v3, switch to native attributes
+ *
  * A resolver strategy composed of a detector, reflector and a service proxy.
  * By default, uses reflection and "wire tags".
  *
@@ -100,8 +101,8 @@ final class TagBasedStrategy
      */
     private function resolveArguments(Container $container, $target, ...$staticArguments): iterable
     {
-        $reflection = ($this->reflector ?? ArgInspector::class . '::reflectionOf')($target);
-        $identifiers = ($this->detector ?? ArgInspector::typeDetector(ArgInspector::tagReader()))($reflection);
+        $reflection = ($this->reflector ?? self::class . '::reflectionOf')($target);
+        $identifiers = ($this->detector ?? self::typeDetector(self::tagReader()))($reflection);
         if (count($identifiers) > 0) {
             return self::resolveServicesFillingInStaticArguments(
                 $identifiers,
@@ -161,7 +162,7 @@ final class TagBasedStrategy
      * Optionally may use other detection for individual parameters, like attribute detection.
      *
      * Usage:
-     *  new WireInvoker($container, ArgInspector::typeDetector(ArgInspector::attributeReader()))
+     *  new TagBasedStrategy(TagBasedStrategy::typeDetector(TagBasedStrategy::attributeReader()))
      *
      * @param callable|null $paramDetector optional detector used for individual parameters
      * @return callable
@@ -169,31 +170,27 @@ final class TagBasedStrategy
     public static function typeDetector(?callable $paramDetector = null): callable
     {
         return function (?FunctionRef $reflection) use ($paramDetector): array {
-            return $reflection !== null ? static::detectTypes($reflection, $paramDetector) : [];
+            return $reflection !== null ? self::detectTypes($reflection, $paramDetector) : [];
         };
     }
 
     /**
-     * @deprecated switch to using attributes for much better performance.
-     *
      * Returns a reflection-based detector that only detects "wire tags".
      *
      * Usage:
-     *  new WireInvoker($container, ArgInspector::tagDetector())
+     *  new TagBasedStrategy(TagBasedStrategy::tagDetector())
      *
      * @param string $tag defaults to "wire"; only alphanumeric characters should be used; case insensitive
      * @return callable
      */
     public static function tagDetector(string $tag = null): callable
     {
-        return static::typeDetector(static::tagReader($tag, false));
+        return self::typeDetector(self::tagReader($tag, false));
     }
 
     /**
-     * @deprecated switch to using attributes for much better performance.
-     *
-     * Returns a callable to be used as $detector argument to the `ArgInspector::detectTypes()` call.
-     * @see ArgInspector::detectTypes()
+     * Returns a callable to be used as $detector argument to the `TagBasedStrategy::detectTypes()` call.
+     * @see TagBasedStrategy::detectTypes()
      *
      * The callable will collect "wire tags" of parameter annotations, `@ param`.
      * If no tag is present, it will return type-hinted class name by default.
@@ -209,7 +206,7 @@ final class TagBasedStrategy
      *                                        \___________________/
      *                                          service identifier
      * Usage:
-     *  $types = ArgInspector::detectTypes(new ReflectionFunction($func), ArgInspector::tagReader());
+     *  $types = TagBasedStrategy::detectTypes(new ReflectionFunction($func), TagBasedStrategy::tagReader());
      *
      * @param string $tag defaults to "wire"; only alphanumeric characters should be used; case insensitive
      * @param bool $defaultToTypeHint whether or not to return type-hinted class names when a tag is not present
@@ -225,9 +222,9 @@ final class TagBasedStrategy
         ) use ($tag, &$annotations, &$reflectionInstance, $defaultToTypeHint): ?string {
             if ($annotations === null || $reflection !== $reflectionInstance) {
                 $reflectionInstance = $reflection;
-                $annotations = static::parseWireTags($reflection, $tag);
+                $annotations = self::parseWireTags($reflection, $tag);
             }
-            $annotation = $annotations[$param->getName()] ?? ($defaultToTypeHint ? static::typeHintOf($param) : null);
+            $annotation = $annotations[$param->getName()] ?? ($defaultToTypeHint ? self::typeHintOf($param) : null);
             // omit empty annotations - empty wire tag indicates "no wiring"
             return $annotation !== '' ? $annotation : null;
         };
@@ -239,9 +236,9 @@ final class TagBasedStrategy
      * If a custom $detector is passed, it is used for each of the parameters instead.
      *
      * Usage:
-     *  $types = ArgInspector::types(new ReflectionFunction($func));
-     *  $types = ArgInspector::types(new ReflectionMethod($object, $methodName));
-     *  $types = ArgInspector::types(new ReflectionMethod('Namespace\Object::method'));
+     *  $types = TagBasedStrategy::types(new ReflectionFunction($func));
+     *  $types = TagBasedStrategy::types(new ReflectionMethod($object, $methodName));
+     *  $types = TagBasedStrategy::types(new ReflectionMethod('Namespace\Object::method'));
      *
      * @param FunctionRef $reflection
      * @param callable|null $paramDetector called for each parameter, if provided
@@ -256,7 +253,7 @@ final class TagBasedStrategy
         $types = array_map(function (ParamRef $parameter) use ($reflection, $paramDetector): ?string {
             return $paramDetector !== null ?
                 $paramDetector($parameter, $reflection) :
-                static::typeHintOf($parameter);
+                self::typeHintOf($parameter);
         }, $reflection->getParameters());
 
         // remove trailing null values (helps with variadic parameters and so on)
@@ -316,8 +313,6 @@ final class TagBasedStrategy
     }
 
     /**
-     * @deprecated switch to using attributes for much better performance.
-     *
      * @internal
      */
     public static function parseWireTags(FunctionRef $reflection, string $tag = null): array

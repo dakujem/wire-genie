@@ -9,8 +9,6 @@ Wire with genie powers.
 >
 > 💿 `composer require dakujem/wire-genie`
 >
-> 📒 [Changelog / migration guide](changelog.md)
->
 
 
 
@@ -19,29 +17,12 @@ Wire with genie powers.
 - [x] namespace
 - [x] deprecations
 - [ ] docs
+- [ ] examples
 - [x] compatibility (for annotations/wire tags)
 - [x] changelog / migration guide
 - [x] REJECTED split package for "providers" (provider, limiter)? (`d\Contain`, `d\Deal`, `d\Dispense`)
 - [ ] TODOs in code
-
-```
-d\Wire\Invoker (interface)
-d\Wire\Constructor (interface)
-d\Wire\Attributes\Attribute
-d\Wire\Inspector (from ArgInspector)
-d\Wire\PredictableAccess
-
-d\Wire\Exceptions\ServiceNotWhitelisted (make LimiterException into an interface for compat.)
-d\Wire\Exceptions\ArgumentNotAvailable
-
-d\Wire\Genie (will contain the new "WireInvoker" and the `provide` function from the "WireGenie" of v1)
-
-Coming soon:
-Magic Lamp - there is zero added value in using this class, but it fits the theme...
-Flying Carpet
-
-+ autoload compat loader
-```
+- [ ] coverage
 
 ---
 
@@ -390,6 +371,18 @@ at the moment of calling its `invoke`/`construct` methods, once per each call.\
 This is contrary to `WireGenie::provide*()` methods,
 that resolve the dependencies at the moment of their call and only once,
 regardless of how many callables are invoked by the provider returned by the methods.
+
+
+## Flying carpet
+
+We've already got a lamp and a genie... so?
+
+
+## Changelog & Migration guide
+
+>
+> 📒 [Changelog](changelog.md)
+>
 
 
 ## Testing

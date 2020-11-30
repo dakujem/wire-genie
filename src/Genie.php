@@ -85,18 +85,19 @@ final class Genie implements Invoker, Constructor
     }
 
     /**
-     * Provide a fellow invoker with a set of services.
+     * Provide services without directly exposing them.
+     * Returns a fellow invoker with the requested services provisioned.
      *
-     * Directly resolves given identifiers using the container and returns an invoker.
-     * The invoker can then be used to invoke other callables,
+     * Directly resolves given identifiers using the service container and returns an invoker.
+     * The invoker can then be used to invoke other callables or construct objects,
      * passing the resolved services as arguments to each invocation.
      *
      * When a dependency is not present in the container, it is resolved to `null` instead.
      *
      * @param string ...$services list of identifiers for the container to resolve
-     * @return Simpleton callable invoker implementation
+     * @return Simpleton callable Invoker and Constructor implementation that has been provisioned with the services
      */
-    public function provide(...$services): callable // TODO or "equip"? + interface supplier/provider ?
+    public function provide(...$services): callable
     {
         $resolved = array_map(
             fn($identifier) => $this->container->has($identifier) ? $this->container->get($identifier) : null,

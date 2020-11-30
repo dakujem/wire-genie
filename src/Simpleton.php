@@ -24,7 +24,7 @@ namespace Dakujem\Wire;
  *
  * @author Andrej Rypák (dakujem) <xrypak@gmail.com>
  */
-class Simpleton implements Invoker, Constructor // TODO "unit", "provision", package, pack, kit, bin ?
+class Simpleton implements Invoker, Constructor
 {
     use PredictableAccess;
 

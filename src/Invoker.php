@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Dakujem\Wire;
 
 /**
- * A general interface for an object able to invoke callables.
- * These implementations will usually provide arguments to the call.
+ * A general interface for objects able to invoke callables.
+ * These implementations will usually provide some or all arguments for the invocation.
  *
  * @author Andrej Rypák (dakujem) <xrypak@gmail.com>
  */
