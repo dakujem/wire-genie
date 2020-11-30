@@ -1,6 +1,6 @@
 {
   "name": "dakujem/wire-genie",
-  "description": "Wire with genie powers.",
+  "description": "Autowiring Tool & Dependency Provider. Wire with genie powers.",
   "license": "Unlicense",
   "authors": [
     {
@@ -18,10 +18,9 @@
   },
   "autoload": {
     "psr-4": {
-      "Dakujem\\Wire\\": "src/",
-      "Dakujem\\": "src/legacy/"
+      "Dakujem\\Wire\\": "src/"
     },
-    "files": ["src/legacy/compat.php"]
+    "files": ["compat.php"]
   },
   "scripts": {
     "test": "phpunit tests"

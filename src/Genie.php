@@ -15,7 +15,7 @@ use Psr\Container\ContainerInterface as Container;
  * By default, it uses the reflection API and leverages PHP 8 attributes, but can be configured otherwise.
  *
  * The class revolves around three methods and the default resolver strategy:
- * @see AttributeBasedResolverStrategy
+ * @see AttributeBasedStrategy
  * @see Genie::invoke()
  * @see Genie::construct()
  * @see Genie::provide()
@@ -40,7 +40,7 @@ final class Genie implements Invoker, Constructor
      * the callable (or constructor) parameter types are detected using the PHP's reflection API.
      * Then, each of the parameters is mapped to an argument for the invocation,
      * leveraging the reflection API and PHP 8 attributes.
-     * @see AttributeBasedResolverStrategy
+     * @see AttributeBasedStrategy
      *
      * The process can be altered not to work with reflection or attributes,
      * it's all up to the resolver strategy.
@@ -134,7 +134,7 @@ final class Genie implements Invoker, Constructor
     private function resolveArguments(callable|string $target, ...$staticArguments): iterable
     {
         try {
-            return ($this->core ?? new AttributeBasedResolverStrategy())(
+            return ($this->core ?? new AttributeBasedStrategy())(
                 $this,
                 $target,
                 ...$staticArguments,

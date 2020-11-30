@@ -2,6 +2,8 @@
 
 /**
  * This file makes for smoother migration by aliasing classes that have been renamed or replaced.
+ *
+ * class_alias( new_class, old_class )
  */
 
 if (interface_exists(Dakujem\Wire\Constructor::class) && !interface_exists(Dakujem\Constructor::class)) {
@@ -20,6 +22,9 @@ if (class_exists(Dakujem\Wire\Genie::class) && !class_exists(Dakujem\WireGenie::
 }
 if (class_exists(Dakujem\Wire\Genie::class) && !class_exists(Dakujem\WireInvoker::class)) {
     class_alias(Dakujem\Wire\Genie::class, Dakujem\WireInvoker::class);
+}
+if (class_exists(Dakujem\Wire\TagBasedStrategy::class) && !class_exists(Dakujem\ArgInspector::class)) {
+    class_alias(Dakujem\Wire\TagBasedStrategy::class, Dakujem\ArgInspector::class);
 }
 
 if (class_exists(Dakujem\Wire\Simpleton::class) && !class_exists(Dakujem\InvokableProvider::class)) {

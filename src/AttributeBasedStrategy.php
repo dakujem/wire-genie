@@ -20,6 +20,7 @@ use ReflectionUnionType;
 
 /**
  * The default resolver strategy based on reflection and native attributes.
+ *
  * Callable.
  * fn(Genie, callable|string, ...):iterable
  *
@@ -31,7 +32,7 @@ use ReflectionUnionType;
  *
  * @author Andrej Rypak <xrypak@gmail.com>
  */
-final class AttributeBasedResolverStrategy
+final class AttributeBasedStrategy
 {
     use PredictableAccess;
 

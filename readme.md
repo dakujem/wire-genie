@@ -4,8 +4,14 @@
 [![Build Status](https://travis-ci.org/dakujem/wire-genie.svg?branch=master)](https://travis-ci.org/dakujem/wire-genie)
 
 **Autowiring Tool & Dependency Provider** for PSR-11 service containers.
+Wire with genie powers.
 
+>
 > 💿 `composer require dakujem/wire-genie`
+>
+> 📒 [Changelog / migration guide](changelog.md)
+>
+
 
 
 ## TODOs
@@ -13,8 +19,8 @@
 - [x] namespace
 - [x] deprecations
 - [ ] docs
-- [ ] compatibility (for annotations/wire tags)
-- [ ] changelog / migration guide
+- [x] compatibility (for annotations/wire tags)
+- [x] changelog / migration guide
 - [x] REJECTED split package for "providers" (provider, limiter)? (`d\Contain`, `d\Deal`, `d\Dispense`)
 - [ ] TODOs in code
 
@@ -399,3 +405,7 @@ or\
 
 Ideas, feature requests and other contribution is welcome.
 Please send a PR or create an issue.
+
+---
+
+Now go, do some wiring!
