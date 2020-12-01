@@ -23,6 +23,12 @@
     "files": ["compat.php"]
   },
   "scripts": {
-    "test": "phpunit tests"
+    "test": "phpunit tests",
+    "test:ci": "phpunit tests --coverage-clover tests/output/coverage.xml"
+  },
+  "scripts-descriptions": {
+    "test": "Run application tests. (defaults to local tests)",
+    "test:local": "Run application tests with local configuration.",
+    "test:ci": "Run application tests, provide configuration options as needed."
   }
 }

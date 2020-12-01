@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Dakujem\Wire\Tests;
 
 use Dakujem\Wire\Invoker;
@@ -97,5 +99,4 @@ final class GenieProvisioningTest extends TestCase
         $sleeve = ContainerProvider::createContainer();
         (new Genie($sleeve))->provideSafe('whatever', 'genie', Genie::class);
     }
-
 }

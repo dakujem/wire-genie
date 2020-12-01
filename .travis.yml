@@ -10,9 +10,13 @@ matrix:
     - php: nightly
 install:
   - composer i -n -o --no-suggest --prefer-dist
+  - composer req php-coveralls/php-coveralls -n -o --no-suggest --prefer-dist
 
 script:
-  - composer test
+  - composer test:ci
+
+after_success:
+  - travis_retry php vendor/bin/php-coveralls -v --coverage_clover=tests/output/clover.xml --json_path=tests/output/coveralls.json
 
 cache:
   directories:

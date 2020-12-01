@@ -4,62 +4,26 @@ declare(strict_types=1);
 
 namespace Dakujem\Wire\Tests;
 
-use Dakujem\ArgInspector;
+use Dakujem\Wire\Genie;
+use Dakujem\Wire\TagBasedStrategy;
 use Dakujem\WireGenie;
-use Dakujem\WireInvoker;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use ReflectionFunctionAbstract;
 
 require_once 'AssertsErrors.php';
+require_once 'testHelperClasses.php';
 
 /**
  * @internal test
  */
-final class WireInvokerTest extends TestCase
+final class GenieWithTagBasedStrategyTest extends TestCase
 {
     use AssertsErrors;
 
-    public function testMixingArguments()
-    {
-        $provider = function ($id) {
-            return $id; // normally this returns a service registered under $id service identifier
-        };
-        $identifiers = [
-            'foo',
-            null,
-            'bar',
-            null,
-            'wham',
-        ];
-
-        $staticArguments = [1, 2, 3, 42, 'foobar'];
-        $arguments = WireInvoker::resolveServicesFillingInStaticArguments($identifiers, $provider, $staticArguments);
-        $this->assertSame([
-            'foo',
-            1,
-            'bar',
-            2,
-            'wham',
-            3,
-            42,
-            'foobar',
-        ], $arguments);
-
-        $staticArguments = ['foobar'];
-        $arguments = WireInvoker::resolveServicesFillingInStaticArguments($identifiers, $provider, $staticArguments);
-        $this->assertSame([
-            'foo',
-            'foobar',
-            'bar',
-            null,
-            'wham',
-        ], $arguments);
-    }
-
     public function testInvokerFillsInArguments()
     {
-        $invoker = new WireInvoker(ContainerProvider::createContainer());
+        $invoker = new Genie(ContainerProvider::createContainer(), new TagBasedStrategy());
         $func = function () {
             return func_get_args();
         };
@@ -70,7 +34,7 @@ final class WireInvokerTest extends TestCase
 
     public function testInvokerInvokesAnyCallableTypeAndFillsInUnresolvedArguments()
     {
-        $invoker = new WireInvoker(ContainerProvider::createContainer());
+        $invoker = new Genie(ContainerProvider::createContainer(), new TagBasedStrategy());
 
         $func = function (Foo $foo, int $theAnswer) {
             return [$foo, $theAnswer];
@@ -101,7 +65,7 @@ final class WireInvokerTest extends TestCase
 
     public function testInvokerReadsTagsByDefault()
     {
-        $invoker = new WireInvoker(ContainerProvider::createContainer());
+        $invoker = new Genie(ContainerProvider::createContainer(), new TagBasedStrategy());
         // tags should be read by default
         $rv = $invoker->invoke([$this, 'methodTagOverride'], 42);
         $this->assertCount(3, $rv);
@@ -112,7 +76,7 @@ final class WireInvokerTest extends TestCase
 
     public function testAutomaticResolutionCanBeOverridden()
     {
-        $invoker = new WireInvoker($sleeve = ContainerProvider::createContainer());
+        $invoker = new Genie($sleeve = ContainerProvider::createContainer(), new TagBasedStrategy());
         $func = function (Bar $bar) {
             return func_get_args();
         };
@@ -133,7 +97,7 @@ final class WireInvokerTest extends TestCase
 
     public function testConstructor()
     {
-        $invoker = new WireInvoker($sleeve = ContainerProvider::createContainer());
+        $invoker = new Genie($sleeve = ContainerProvider::createContainer(), new TagBasedStrategy());
         $rv = $invoker->construct(WeepingWillow::class);
         $this->assertInstanceOf(WeepingWillow::class, $rv);
         $this->assertSame([], $rv->args);
@@ -145,12 +109,12 @@ final class WireInvokerTest extends TestCase
 
     public function testInvalidInvocation1()
     {
-        $invoker = new WireInvoker(ContainerProvider::createContainer());
+        $invoker = new Genie(ContainerProvider::createContainer(), new TagBasedStrategy());
 
         // passes ok
         $invoker->invoke([$this, 'methodFoo'], 42);
 
-        $this->expectErrorMessage('Too few arguments to function Dakujem\Tests\WireInvokerTest::methodFoo(), 1 passed');
+        $this->expectErrorMessage(sprintf('Too few arguments to function %s::methodFoo(), 1 passed', self::class));
 
         // type error, missing argument
         $invoker->invoke([$this, 'methodFoo']);
@@ -158,7 +122,7 @@ final class WireInvokerTest extends TestCase
 
     public function testInvalidInvocation2()
     {
-        $invoker = new WireInvoker(ContainerProvider::createContainer());
+        $invoker = new Genie(ContainerProvider::createContainer(), new TagBasedStrategy());
 
         $func = function (Foo $foo, int $theAnswer) {
             return [$foo, $theAnswer];
@@ -171,7 +135,7 @@ final class WireInvokerTest extends TestCase
         $invoker->invoke($func, 42);
         $invoker->invoke($func2);
 
-        $this->expectErrorMessage('Too few arguments to function Dakujem\Tests\WireInvokerTest::Dakujem\Tests\{closure}(), 1 passed');
+        $this->expectErrorMessage(sprintf('Too few arguments to function %s::%s\{closure}(), 1 passed', self::class, __NAMESPACE__));
 
         // type error, missing argument
         $invoker->invoke($func);
@@ -183,7 +147,7 @@ final class WireInvokerTest extends TestCase
         $detectorCalled = 0;
         $detector = function (ReflectionFunctionAbstract $ref) use (&$detectorCalled) {
             $detectorCalled += 1;
-            return ArgInspector::detectTypes($ref); // no tag reader
+            return TagBasedStrategy::detectTypes($ref); // no tag reader
         };
         $proxyCalled = 0;
         $proxy = function ($id, ContainerInterface $container) use (&$proxyCalled) {
@@ -193,9 +157,9 @@ final class WireInvokerTest extends TestCase
         $reflectorCalled = 0;
         $reflector = function ($target) use (&$reflectorCalled) {
             $reflectorCalled += 1;
-            return ArgInspector::reflectionOf($target);
+            return TagBasedStrategy::reflectionOf($target);
         };
-        $invoker = new WireInvoker($sleeve, $detector, $proxy, $reflector);
+        $invoker = new Genie($sleeve, new TagBasedStrategy($detector, $proxy, $reflector));
         [$bar, $fourtyTwo] = $invoker->invoke([$this, 'methodTagOverride'], 42);
         $this->assertSame(1, $reflectorCalled);
         $this->assertSame(1, $detectorCalled);
@@ -210,7 +174,7 @@ final class WireInvokerTest extends TestCase
         $detectorCalled = 0;
         $detector = function (ReflectionFunctionAbstract $ref) use (&$detectorCalled) {
             $detectorCalled += 1;
-            return ArgInspector::detectTypes($ref, ArgInspector::tagReader()); // added tag reader
+            return TagBasedStrategy::detectTypes($ref, TagBasedStrategy::tagReader()); // added tag reader
         };
         $proxyCalled = 0;
         $proxy = function ($id, ContainerInterface $container) use (&$proxyCalled) {
@@ -220,9 +184,9 @@ final class WireInvokerTest extends TestCase
         $reflectorCalled = 0;
         $reflector = function ($target) use (&$reflectorCalled) {
             $reflectorCalled += 1;
-            return ArgInspector::reflectionOf($target);
+            return TagBasedStrategy::reflectionOf($target);
         };
-        $invoker = new WireInvoker($sleeve, $detector, $proxy, $reflector);
+        $invoker = new Genie($sleeve, new TagBasedStrategy($detector, $proxy, $reflector));
         [$baz, $genie, $fourtyTwo, $foo] = $invoker->invoke([$this, 'methodTagOverride'], 42, 'foobar');
         $this->assertSame(1, $reflectorCalled);
         $this->assertSame(1, $detectorCalled);
@@ -244,7 +208,7 @@ final class WireInvokerTest extends TestCase
     }
 
     /**
-     * @param Bar $bar [wire:Dakujem\Tests\Baz]
+     * @param Bar $bar [wire:Dakujem\Wire\Tests\Baz]
      * @param mixed $theAnswer [wire:genie]
      */
     public function methodTagOverride(Bar $bar, $theAnswer): array

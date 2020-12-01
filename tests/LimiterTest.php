@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Dakujem\Wire\Tests;
@@ -15,7 +16,7 @@ require_once 'testHelperClasses.php';
 /**
  * @internal test
  */
-final class WireLimiterTest extends TestCase
+final class LimiterTest extends TestCase
 {
     public function testThrow(): void
     {
