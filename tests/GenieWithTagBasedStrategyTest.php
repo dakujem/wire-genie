@@ -7,7 +7,6 @@ namespace Dakujem\Wire\Tests;
 use Dakujem\Wire\Genie;
 use Dakujem\Wire\TagBasedStrategy;
 use Dakujem\WireGenie;
-use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use ReflectionFunctionAbstract;
 
@@ -17,50 +16,19 @@ require_once 'testHelperClasses.php';
 /**
  * @internal test
  */
-final class GenieWithTagBasedStrategyTest extends TestCase
+final class GenieWithTagBasedStrategyTest extends GenieBaseTest
 {
-    use AssertsErrors;
 
     public function testInvokerFillsInArguments()
     {
         $invoker = new Genie(ContainerProvider::createContainer(), new TagBasedStrategy());
-        $func = function () {
-            return func_get_args();
-        };
-        $this->assertSame([], $invoker->invoke($func));
-        $this->assertSame([42], $invoker->invoke($func, 42));
-        $this->assertSame(['foo'], $invoker->invoke($func, 'foo'));
+        $this->_FillsInArguments($invoker);
     }
 
     public function testInvokerInvokesAnyCallableTypeAndFillsInUnresolvedArguments()
     {
         $invoker = new Genie(ContainerProvider::createContainer(), new TagBasedStrategy());
-
-        $func = function (Foo $foo, int $theAnswer) {
-            return [$foo, $theAnswer];
-        };
-        $invokable = new class {
-            public function __invoke(Foo $foo, int $theAnswer)
-            {
-                return [$foo, $theAnswer];
-            }
-        };
-
-        $check = function ($args) {
-            $this->assertInstanceOf(Foo::class, $args[0]);
-            $this->assertSame(42, $args[1]);
-        };
-
-        $rv = $invoker->invoke($func, 42);
-        $check($rv);
-        $rv = $invoker->invoke($invokable, 42);
-        $check($rv);
-        $rv = $invoker->invoke([$this, 'methodFoo'], 42);
-        $check($rv);
-        $rv = $invoker->invoke('\sleep', 0);
-        $this->assertSame(0, $rv); // sleep returns 0 on success
-        $rv = $invoker->invoke(self::class . '::methodBar', 42);
-        $check($rv);
+        $this->_InvokesAnyCallableTypeAndFillsInUnresolvedArguments($invoker);
     }
 
     public function testInvokerReadsTagsByDefault()
@@ -114,7 +82,7 @@ final class GenieWithTagBasedStrategyTest extends TestCase
         // passes ok
         $invoker->invoke([$this, 'methodFoo'], 42);
 
-        $this->expectErrorMessage(sprintf('Too few arguments to function %s::methodFoo(), 1 passed', self::class));
+        $this->expectErrorMessage(sprintf('Too few arguments to function %s::methodFoo(), 1 passed', parent::class));
 
         // type error, missing argument
         $invoker->invoke([$this, 'methodFoo']);
@@ -195,24 +163,5 @@ final class GenieWithTagBasedStrategyTest extends TestCase
         $this->assertSame($sleeve->get('genie'), $genie);
         $this->assertSame(42, $fourtyTwo); // rest arguments trail
         $this->assertSame('foobar', $foo); // rest arguments trail
-    }
-
-    public function methodFoo(Foo $foo, int $theAnswer): array
-    {
-        return func_get_args();
-    }
-
-    public static function methodBar(Foo $foo, int $theAnswer): array
-    {
-        return func_get_args();
-    }
-
-    /**
-     * @param Bar $bar [wire:Dakujem\Wire\Tests\Baz]
-     * @param mixed $theAnswer [wire:genie]
-     */
-    public function methodTagOverride(Bar $bar, $theAnswer): array
-    {
-        return func_get_args();
     }
 }

@@ -12,6 +12,7 @@ use Dakujem\Wire\Exceptions\ArgumentNotAvailable;
 use Dakujem\Wire\Exceptions\InvalidConfiguration;
 use Dakujem\Wire\Exceptions\UnresolvableArgument;
 use Dakujem\Wire\Exceptions\UnresolvableCallArguments;
+use LogicException;
 use Psr\Container\ContainerInterface as Container;
 use ReflectionAttribute as AttrRef;
 use ReflectionNamedType;
@@ -77,7 +78,7 @@ final class AttributeBasedStrategy
      *                           each of the parameters is passed to the $resolver;
      *                           function(callable|string):iterable
      * @param callable $resolver the callable that resolves each parameter into a respective argument;
-     *                           function(mixed $param, Container, callable $staticArgument): mixed
+     *                           function(mixed $param, Container, callable $staticArgument, Genie): mixed
      * @return callable strategy for Genie class
      */
     public static function core(callable $detector, callable $resolver): callable
@@ -119,6 +120,8 @@ final class AttributeBasedStrategy
                 throw new ArgumentNotAvailable($name);
             };
 
+            $container = $genie->exposeContainer(fn($c): Container => $c);
+
             /** @var ParamRef $param */
             foreach ($detector($target) as $param) {
                 if (!$param instanceof ParamRef) {
@@ -127,7 +130,7 @@ final class AttributeBasedStrategy
                 // skip variadic parameter(s)
                 if (!$param->isVariadic()) {
                     // TODO is there any benefit in using a generator here? probably not.
-                    yield $resolver($param, $genie, $next); // TODO yield with key?? $param->getName() =>
+                    yield $resolver($param, $container, $next, $genie); // TODO yield with key?? $param->getName() =>
                 }
             }
             // only yield the rest args with numeric indices
@@ -151,15 +154,12 @@ final class AttributeBasedStrategy
         //
         // Fetching services from the container is always prioritized above live construction of the services.
         //
-        return function (ParamRef $param, Genie $genie, callable $staticArgProvider): mixed {
+        return function (ParamRef $param, Container $container, callable $staticArgProvider, Genie $genie): mixed {
             //
             // Check the "skip" hint, completely skip any automatic wiring if found.
             //
             $skip = $param->getAttributes(AttrSkip::class, AttrRef::IS_INSTANCEOF);
-            if ($skip !== []) {
-                /** @var Container $container */
-                $container = $genie->exposeContainer(fn($c): Container => $c);
-
+            if ($skip === []) {
                 //
                 // Check if there is a wire hint, try to fetch the service.
                 //
@@ -233,7 +233,7 @@ final class AttributeBasedStrategy
             // if the type hint is a built-in type or there are no more type-hinted classes,
             // try to use a static argument from the pool
             try {
-                return $staticArgProvider();
+                return $staticArgProvider($param->getName());
             } catch (ArgumentNotAvailable) {
                 // continue...
             }
