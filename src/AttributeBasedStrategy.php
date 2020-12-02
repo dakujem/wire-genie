@@ -12,8 +12,8 @@ use Dakujem\Wire\Exceptions\ArgumentNotAvailable;
 use Dakujem\Wire\Exceptions\InvalidConfiguration;
 use Dakujem\Wire\Exceptions\UnresolvableArgument;
 use Dakujem\Wire\Exceptions\UnresolvableCallArguments;
-use LogicException;
 use Psr\Container\ContainerInterface as Container;
+use ReflectionAttribute;
 use ReflectionAttribute as AttrRef;
 use ReflectionNamedType;
 use ReflectionParameter as ParamRef;
@@ -105,7 +105,6 @@ final class AttributeBasedStrategy
                 }
 
                 // if there is none, use the first available, but only if its index is numeric !
-                $args = [];
                 end($args);
                 $key = key($args);
                 if (is_int($key)) {
@@ -182,7 +181,7 @@ final class AttributeBasedStrategy
                 $getClassNames = function (iterable $refs): iterable {
                     /** @var ReflectionNamedType $ref */
                     foreach ($refs as $ref) {
-                        if (!$ref->isBuiltin()) {
+                        if ($ref !== null && !$ref->isBuiltin()) {
                             yield $ref->getName();
                         }
                     }
@@ -249,7 +248,7 @@ final class AttributeBasedStrategy
             }
 
             // throw otherwise
-            throw new UnresolvableArgument($param->getName());
+            throw UnresolvableArgument::arg($param->getName());
         };
     }
 }

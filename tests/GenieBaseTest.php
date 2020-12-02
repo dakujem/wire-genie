@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Dakujem\Wire\Tests;
 
+use Dakujem\Wire\Attributes\Wire;
 use Dakujem\Wire\Genie;
 use Dakujem\Wire\TagBasedStrategy;
 use PHPUnit\Framework\TestCase;
@@ -18,7 +19,6 @@ abstract class GenieBaseTest extends TestCase
 {
     use AssertsErrors;
 
-
     protected function _FillsInArguments(Genie $g)
     {
         $g = new Genie(ContainerProvider::createContainer(), new TagBasedStrategy());
@@ -27,7 +27,7 @@ abstract class GenieBaseTest extends TestCase
         };
         $this->assertSame([], $g->invoke($func));
         $this->assertSame([42], $g->invoke($func, 42));
-        $this->assertSame(['foo'], $g->invoke($func, 'foo'));
+        $this->assertSame(['foo', 'bar'], $g->invoke($func, 'foo', 'bar'));
     }
 
     protected function _InvokesAnyCallableTypeAndFillsInUnresolvedArguments(Genie $g)
@@ -66,7 +66,7 @@ abstract class GenieBaseTest extends TestCase
      * @param \Closure $closure
      * @return mixed
      */
-    private static function with(string|object $objectOrClass, \Closure $closure): mixed
+    protected static function with(string|object $objectOrClass, \Closure $closure): mixed
     {
         return $closure->bindTo(is_object($objectOrClass) ? $objectOrClass : null, $objectOrClass)();
     }
@@ -99,6 +99,11 @@ abstract class GenieBaseTest extends TestCase
      * @param mixed $theAnswer [wire:genie]
      */
     public function methodTagOverride(Bar $bar, $theAnswer): array
+    {
+        return func_get_args();
+    }
+
+    public function methodAttributeOverride(#[Wire(Baz::class)] Bar $bar, #[Wire('genie')] $theAnswer): array
     {
         return func_get_args();
     }

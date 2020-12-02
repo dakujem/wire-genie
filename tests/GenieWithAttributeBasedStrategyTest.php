@@ -21,6 +21,24 @@ final class GenieWithAttributeBasedStrategyTest extends GenieBaseTest
         $this->_FillsInArguments($invoker);
     }
 
+    public function testInvokerInvokesAnyCallableTypeAndFillsInUnresolvedArguments()
+    {
+        $invoker = new Genie(ContainerProvider::createContainer());
+        $this->_InvokesAnyCallableTypeAndFillsInUnresolvedArguments($invoker);
+    }
+
+    public function testInvokerReadsTagsByDefault()
+    {
+        $g = new Genie(ContainerProvider::createContainer());
+        // tags should be read by default
+        $rv = $g->invoke([$this, 'methodAttributeOverride'], 42);
+
+        $this->assertCount(3, $rv);
+        $this->assertInstanceOf(Baz::class, $rv[0]);
+        $this->assertInstanceOf(Genie::class, $rv[1]);
+        $this->assertSame(42, $rv[2]);
+    }
+
     public function testInvalidInvocation()
     {
         $g = new Genie(ContainerProvider::createContainer());
@@ -34,7 +52,7 @@ final class GenieWithAttributeBasedStrategyTest extends GenieBaseTest
                 $g->invoke([$this, 'methodFoo']);
             },
             UnresolvableArgument::class,
-            'theAnswer'
+            'Unresolvable: \'theAnswer\'.'
         );
 
         $func = function (Foo $foo, int $theAnswer) {
@@ -54,7 +72,7 @@ final class GenieWithAttributeBasedStrategyTest extends GenieBaseTest
                 $g->invoke($func);
             },
             UnresolvableArgument::class,
-            'theAnswer'
+            'Unresolvable: \'theAnswer\'.'
         );
     }
 }

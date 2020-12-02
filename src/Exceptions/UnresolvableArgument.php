@@ -13,4 +13,8 @@ use RuntimeException;
  */
 class UnresolvableArgument extends RuntimeException implements Unresolvable
 {
+    public static function arg(string $name)
+    {
+        return new static("Unresolvable: '{$name}'.");
+    }
 }
