@@ -13,7 +13,6 @@ use Dakujem\Wire\Exceptions\InvalidConfiguration;
 use Dakujem\Wire\Exceptions\UnresolvableArgument;
 use Dakujem\Wire\Exceptions\UnresolvableCallArguments;
 use Psr\Container\ContainerInterface as Container;
-use ReflectionAttribute;
 use ReflectionAttribute as AttrRef;
 use ReflectionNamedType;
 use ReflectionParameter as ParamRef;
@@ -94,9 +93,9 @@ final class AttributeBasedStrategy
             $args = array_reverse($staticArgs, true); // preserve keys!
 
             // prepare a callable to serve static arguments
-            $next = function (string $name) use (&$args): mixed {
+            $next = function (?string $name) use (&$args): mixed {
                 // if there is an attr with given name, consume it
-                if (array_key_exists($name, $args)) {
+                if ($name !== null && array_key_exists($name, $args)) {
                     try {
                         return $args[$name];
                     } finally {
@@ -105,18 +104,20 @@ final class AttributeBasedStrategy
                 }
 
                 // if there is none, use the first available, but only if its index is numeric !
-                end($args);
-                $key = key($args);
-                if (is_int($key)) {
-                    try {
-                        return $args[$key];
-                    } finally {
-                        unset($args[$key]);
+                if ($name === null) {
+                    end($args);
+                    $key = key($args);
+                    if (is_int($key)) {
+                        try {
+                            return $args[$key];
+                        } finally {
+                            unset($args[$key]);
+                        }
                     }
                 }
 
                 // otherwise throw to indicate there is no other argument available
-                throw new ArgumentNotAvailable($name);
+                throw ArgumentNotAvailable::arg($name);
             };
 
             $container = $genie->exposeContainer(fn($c): Container => $c);
@@ -136,6 +137,7 @@ final class AttributeBasedStrategy
             yield from array_reverse(
                 array_filter($args, fn(int|string $key): bool => is_int($key), ARRAY_FILTER_USE_KEY)
             );
+            // Internal warning: the resulting generator must only be unpacked, indices would be overwritten otherwise
         };
     }
 
@@ -148,12 +150,33 @@ final class AttributeBasedStrategy
         };
     }
 
+    /**
+     * Priorities:
+     * 1. named argument passed
+     * 2. #[Wire(id)]
+     * 3. type hint
+     * 4. #[Hot] + type hint
+     * 5. #[Make(class)]
+     * 5. next unnamed argument
+     * 7. default parameter value
+     * 8. null
+     *
+     * Points 2-5 are skippable using the #[Skip] attribute.
+     *
+     * @return callable
+     */
     public static function defaultResolver(): callable
     {
-        //
-        // Fetching services from the container is always prioritized above live construction of the services.
-        //
         return function (ParamRef $param, Container $container, callable $staticArgProvider, Genie $genie): mixed {
+            //
+            // If there is a named argument passed to the invocation, use it.
+            //
+            try {
+                return $staticArgProvider($param->getName());
+            } catch (ArgumentNotAvailable) {
+                // continue...
+            }
+
             //
             // Check the "skip" hint, completely skip any automatic wiring if found.
             //
@@ -174,27 +197,32 @@ final class AttributeBasedStrategy
                     }
                 }
 
-                $getTypes = function (ParamRef $param): array {
-                    $t = $param->getType();
-                    return $t instanceof ReflectionUnionType ? $t->getTypes() : [$t];
-                };
-                $getClassNames = function (iterable $refs): iterable {
-                    /** @var ReflectionNamedType $ref */
-                    foreach ($refs as $ref) {
-                        if ($ref !== null && !$ref->isBuiltin()) {
-                            yield $ref->getName();
-                        }
-                    }
-                };
-
                 //
                 // In a loop for all possible type-hinted classes,
                 // try to fetch the service.
                 //
-                $serviceNames = $getClassNames($getTypes($param));
+                $t = $param->getType();
+                $refs = $t instanceof ReflectionUnionType ? $t->getTypes() : [$t];
+                $serviceNames = array_filter(array_map(function (?ReflectionNamedType $ref) {
+                    return $ref !== null && !$ref->isBuiltin() ? $ref->getName() : null;
+                }, $refs));
                 foreach ($serviceNames as $name) {
                     if ($container->has($name)) {
                         return $container->get($name);
+                    }
+                }
+
+                //
+                // Then, attempt to construct a service by type-hinted class names, if hinted so.
+                //
+                // #[Hot]
+                //
+                $hot = $param->getAttributes(AttrHot::class, AttrRef::IS_INSTANCEOF);
+                foreach ($hot !== [] ? $serviceNames : [] as $target) {
+                    try {
+                        return $genie->construct($target);
+                    } catch (UnresolvableCallArguments) {
+                        // continue...
                     }
                 }
 
@@ -213,41 +241,35 @@ final class AttributeBasedStrategy
                         // continue...
                     }
                 }
-
-                //
-                // Then, attempt to construct a service by type-hinted class names, if hinted so.
-                //
-                // #[Hot]
-                //
-                $hot = $param->getAttributes(AttrHot::class, AttrRef::IS_INSTANCEOF);
-                foreach ($hot !== [] ? $serviceNames : [] as $target) {
-                    try {
-                        return $genie->construct($target);
-                    } catch (UnresolvableCallArguments) {
-                        // continue...
-                    }
-                }
             }
 
-            // if the type hint is a built-in type or there are no more type-hinted classes,
-            // try to use a static argument from the pool
+            //
+            // If the type hint is a built-in type or there are no more type-hinted classes,
+            // try to use an unnamed argument from the static pool.
+            //
             try {
-                return $staticArgProvider($param->getName());
+                return $staticArgProvider(null);
             } catch (ArgumentNotAvailable) {
                 // continue...
             }
 
-            // fall back to the default value for the parameter, if any
+            //
+            // Fall back to the default value for the parameter, if defined.
+            //
             if ($param->isOptional()) {
                 return $param->getDefaultValue();
             }
 
-            // return null for nullable parameters
+            //
+            // Return `null` for nullable parameters.
+            //
             if ($param->allowsNull()) {
                 return null;
             }
 
-            // throw otherwise
+            //
+            // Throw otherwise.
+            //
             throw UnresolvableArgument::arg($param->getName());
         };
     }

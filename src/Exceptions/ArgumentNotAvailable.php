@@ -13,4 +13,12 @@ use RuntimeException;
  */
 class ArgumentNotAvailable extends RuntimeException implements Unresolvable
 {
+    public ?string $name = null;
+
+    public static function arg(?string $name)
+    {
+        $e = new static($name !== null ? "Unavailable: '{$name}'." : 'No argument available.');
+        $e->name = $name;
+        return $e;
+    }
 }

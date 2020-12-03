@@ -22,6 +22,11 @@
     },
     "files": ["compat.php"]
   },
+  "autoload-dev": {
+    "psr-4": {
+      "Dakujem\\Wire\\Tests\\": "tests/"
+    }
+  },
   "scripts": {
     "test": "phpunit tests",
     "test:ci": "phpunit tests --coverage-clover tests/output/coverage.xml"

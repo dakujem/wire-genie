@@ -96,3 +96,33 @@ class HollowWillow extends WeepingWillow
         parent::__construct($foo);
     }
 }
+
+class Thing
+{
+}
+
+interface ServiceInterface
+{
+}
+
+class MyService implements ServiceInterface
+{
+    public Thing $thing;
+    public $foo;
+
+    public function __construct(Thing $thing, $foo)
+    {
+        $this->thing = $thing;
+        $this->foo = $foo;
+    }
+}
+
+class MyOtherService implements ServiceInterface
+{
+    public Thing $thing;
+
+    public function __construct(Thing $thing)
+    {
+        $this->thing = $thing;
+    }
+}
