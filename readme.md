@@ -12,20 +12,25 @@ Wire with genie powers.
 
 
 
-## TODOs
+## TODOs 🚧
 
 - [x] namespace
 - [x] deprecations
 - [ ] docs
-- [ ] examples
+- [?] examples
 - [x] compatibility (for annotations/wire tags)
 - [x] changelog / migration guide
 - [x] REJECTED split package for "providers" (provider, limiter)? (`d\Contain`, `d\Deal`, `d\Dispense`)
-- [ ] TODOs in code
+- [ ] TODO(s) in code
 - [ ] coverage
 
 ---
 
+## 🚧 The documentation is under construction 🚧
+
+The rest of the docs is outdated. Feel free to experiment though, the genie has new powers! 💪
+
+---
 
 Allows to
 - automatically detect parameter types of a _callable_
