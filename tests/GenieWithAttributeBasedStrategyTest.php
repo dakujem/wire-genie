@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Dakujem\Wire\Tests;
 
 use Dakujem\Wire\Attributes\Skip;
-use Dakujem\Wire\Exceptions\UnresolvableArgument;
+use Dakujem\Wire\Exceptions\UnresolvableCallArguments;
 use Dakujem\Wire\Genie;
 
 require_once 'AssertsErrors.php';
@@ -52,7 +52,7 @@ final class GenieWithAttributeBasedStrategyTest extends GenieBaseTest
             function () use ($g) {
                 $g->invoke([$this, 'methodFoo']);
             },
-            UnresolvableArgument::class,
+            UnresolvableCallArguments::class,
             'Unresolvable: \'theAnswer\'.'
         );
 
@@ -72,7 +72,7 @@ final class GenieWithAttributeBasedStrategyTest extends GenieBaseTest
             function () use ($g, $func) {
                 $g->invoke($func);
             },
-            UnresolvableArgument::class,
+            UnresolvableCallArguments::class,
             'Unresolvable: \'theAnswer\'.'
         );
     }

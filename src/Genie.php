@@ -137,7 +137,7 @@ final class Genie implements Invoker, Constructor
                 ...$staticArguments,
             );
         } catch (Unresolvable $ex) {
-            throw new UnresolvableCallArguments($ex);
+            throw UnresolvableCallArguments::from($ex);
         }
     }
 
