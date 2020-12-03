@@ -175,8 +175,8 @@ final class TagBasedStrategyTest extends TestCase
             'wham',
         ];
 
-        $staticArguments = [1, 2, 3, 42, 'foobar'];
-        $arguments = TagBasedStrategy::resolveServicesFillingInStaticArguments($identifiers, $provider, $staticArguments);
+        $pool = [1, 2, 3, 42, 'foobar'];
+        $arguments = TagBasedStrategy::resolveServicesFillingInStaticArguments($identifiers, $provider, $pool);
         $this->assertSame([
             'foo',
             1,
@@ -188,8 +188,8 @@ final class TagBasedStrategyTest extends TestCase
             'foobar',
         ], $arguments);
 
-        $staticArguments = ['foobar'];
-        $arguments = TagBasedStrategy::resolveServicesFillingInStaticArguments($identifiers, $provider, $staticArguments);
+        $pool = ['foobar'];
+        $arguments = TagBasedStrategy::resolveServicesFillingInStaticArguments($identifiers, $provider, $pool);
         $this->assertSame([
             'foo',
             'foobar',

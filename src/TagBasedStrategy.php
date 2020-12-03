@@ -78,14 +78,14 @@ final class TagBasedStrategy
     public function __invoke(
         Genie $genie,
         callable|string $target,
-        ...$staticArgs,
+        ...$pool,
     ): iterable {
         return $this->resolveArguments(
             $genie->exposeContainer(function ($c): Container {
                 return $c;
             }),
             $target,
-            ...$staticArgs,
+            ...$pool,
         );
     }
 
@@ -96,10 +96,10 @@ final class TagBasedStrategy
      *
      * @param Container $container
      * @param callable|string $target a callable to be invoked or a name of a class to be constructed
-     * @param mixed ...$staticArguments static arguments to fill in for parameters where identifier can not be detected
+     * @param mixed ...$pool static arguments to fill in for parameters where identifier can not be detected
      * @return iterable
      */
-    private function resolveArguments(Container $container, $target, ...$staticArguments): iterable
+    private function resolveArguments(Container $container, $target, ...$pool): iterable
     {
         $reflection = ($this->reflector ?? self::class . '::reflectionOf')($target);
         $identifiers = ($this->detector ?? self::typeDetector(self::tagReader()))($reflection);
@@ -107,10 +107,10 @@ final class TagBasedStrategy
             return self::resolveServicesFillingInStaticArguments(
                 $identifiers,
                 self::makeProvider($this->serviceProxy, $container),
-                $staticArguments
+                $pool
             );
         }
-        return $staticArguments;
+        return $pool;
     }
 
     private static function makeProvider(?callable $serviceProxy, Container $container): callable
@@ -125,36 +125,36 @@ final class TagBasedStrategy
     /**
      * A helper method.
      * For each service identifier calls the service provider.
-     * If an identifier is `null`, one of the static arguments is used instead.
+     * If an identifier is `null`, one of the static arguments from the pool is used instead.
      *
      * The resulting array might be a mix of services fetched from the service container via the provider
-     * and other values passed in as static arguments.
+     * and other values passed in as static argument pool.
      *
      * @param array $identifiers array of (nullable string) service identifiers
      * @param callable $serviceProvider returns requested services; function(string $identifier): object
-     * @param array $staticArguments
+     * @param array $pool a pool of (static) arguments to fill-in from for missing services
      * @return array
      */
     public static function resolveServicesFillingInStaticArguments(
         array $identifiers,
         callable $serviceProvider,
-        array $staticArguments
+        array $pool
     ): array {
         $services = [];
         if (count($identifiers) > 0) {
-            $services = array_map(function ($identifier) use ($serviceProvider, &$staticArguments) {
+            $services = array_map(function ($identifier) use ($serviceProvider, &$pool) {
                 if ($identifier !== null) {
                     return $serviceProvider($identifier);
                 }
-                if (count($staticArguments) > 0) {
-                    return array_shift($staticArguments);
+                if (count($pool) > 0) {
+                    return array_shift($pool);
                 }
                 // when no static argument is present for an identifier, return null
                 return null;
             }, $identifiers);
         }
         // merge with the rest of the static arguments
-        return array_merge(array_values($services), array_values($staticArguments));
+        return array_merge(array_values($services), array_values($pool));
     }
 
     /**

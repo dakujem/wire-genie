@@ -51,7 +51,7 @@ final class AttributeBasedStrategy
     public function __invoke(
         Genie $genie,
         callable|string $target,
-        ...$staticArgs,
+        ...$pool,
     ): iterable {
         return self::core(
             $this->detector ?? self::defaultDetector(),
@@ -59,7 +59,7 @@ final class AttributeBasedStrategy
         )(
             $genie,
             $target,
-            ...$staticArgs,
+            ...$pool,
         );
     }
 
@@ -85,33 +85,33 @@ final class AttributeBasedStrategy
         return function (
             Genie $genie,
             callable|string $target,
-            ...$staticArgs,
+            ...$pool,
         ) use (
             $detector,
             $resolver,
         ): iterable {
-            $args = array_reverse($staticArgs, true); // preserve keys!
+            $reversedPool = array_reverse($pool, true); // preserve keys!
 
             // prepare a callable to serve static arguments
-            $next = function (?string $name) use (&$args): mixed {
+            $next = function (?string $name) use (&$reversedPool): mixed {
                 // if there is an attr with given name, consume it
-                if ($name !== null && array_key_exists($name, $args)) {
+                if ($name !== null && array_key_exists($name, $reversedPool)) {
                     try {
-                        return $args[$name];
+                        return $reversedPool[$name];
                     } finally {
-                        unset($args[$name]);
+                        unset($reversedPool[$name]);
                     }
                 }
 
                 // if there is none, use the first available, but only if its index is numeric !
                 if ($name === null) {
-                    end($args);
-                    $key = key($args);
+                    end($reversedPool);
+                    $key = key($reversedPool);
                     if (is_int($key)) {
                         try {
-                            return $args[$key];
+                            return $reversedPool[$key];
                         } finally {
-                            unset($args[$key]);
+                            unset($reversedPool[$key]);
                         }
                     }
                 }
