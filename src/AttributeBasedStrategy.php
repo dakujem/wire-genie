@@ -120,8 +120,9 @@ final class AttributeBasedStrategy
                 throw ArgumentNotAvailable::arg($name);
             };
 
-            $container = $genie->exposeContainer(fn($c): Container => $c);
+            $resolved = [];
 
+            $container = $genie->exposeContainer(fn($c): Container => $c);
             /** @var ParamRef $param */
             foreach ($detector($target) as $param) {
                 if (!$param instanceof ParamRef) {
@@ -129,15 +130,20 @@ final class AttributeBasedStrategy
                 }
                 // skip variadic parameter(s)
                 if (!$param->isVariadic()) {
-                    // TODO is there any benefit in using a generator here? probably not.
-                    yield $resolver($param, $container, $next, $genie); // TODO yield with key?? $param->getName() =>
+                    $resolved[] = $resolver($param, $container, $next, $genie);
                 }
             }
-            // only yield the rest args with numeric indices
-            yield from array_reverse(
-                array_filter($args, fn(int|string $key): bool => is_int($key), ARRAY_FILTER_USE_KEY)
+            // rest args / variadic arg
+            return array_merge(
+                $resolved,
+                array_reverse($reversedPool),
+
+// TODO previously I filtered the named arguments out, but hey, PHP enables to use named args as variadic! This needs some testing/simulation
+//                // only yield the args from the pool with numeric indices:
+//                array_reverse(
+//                    array_filter($reversedPool, fn(int|string $key): bool => is_int($key), ARRAY_FILTER_USE_KEY)
+//                )
             );
-            // Internal warning: the resulting generator must only be unpacked, indices would be overwritten otherwise
         };
     }
 
