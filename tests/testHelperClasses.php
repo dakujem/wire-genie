@@ -36,30 +36,30 @@ class ContainerProvider
             return new Error('Hey! I\'m a new error. Nice to meet you.');
         }));
 
-        $sleeve->set(Foo::class, function () {
-            return new Foo;
+        $sleeve->set(Plant::class, function () {
+            return new Plant;
         });
 
-        $sleeve->set(Bar::class, function () {
-            return new Bar;
+        $sleeve->set(Animal::class, function () {
+            return new Animal;
         });
-        $sleeve->set(Baz::class, function () {
-            return new Baz;
+        $sleeve->set(Sheep::class, function () {
+            return new Sheep;
         });
 
         return $sleeve;
     }
 }
 
-class Foo
+class Plant
 {
 }
 
-class Bar
+class Animal
 {
 }
 
-class Baz extends Bar
+class Sheep extends Animal
 {
 }
 
@@ -91,7 +91,7 @@ class WeepingWillow
 
 class HollowWillow extends WeepingWillow
 {
-    public function __construct(Foo $foo)
+    public function __construct(Plant $foo)
     {
         parent::__construct($foo);
     }

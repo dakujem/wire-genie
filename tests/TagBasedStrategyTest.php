@@ -21,20 +21,20 @@ final class TagBasedStrategyTest extends TestCase
 
     public function testDetectTypes(): void
     {
-        $closure = function (Foo $foo, Bar $bar) {
+        $closure = function (Plant $foo, Animal $bar) {
         };
         $reflection = new ReflectionFunction($closure);
         $types = TagBasedStrategy::detectTypes($reflection);
-        $this->assertSame([Foo::class, Bar::class], $types);
+        $this->assertSame([Plant::class, Animal::class], $types);
     }
 
     public function testDetectTypesWithAScalar(): void
     {
-        $closure = function (Foo $foo, int $qux, Bar $bar, $wham) {
+        $closure = function (Plant $foo, int $qux, Animal $bar, $wham) {
         };
         $reflection = new ReflectionFunction($closure);
         $types = TagBasedStrategy::detectTypes($reflection);
-        $this->assertSame([Foo::class, null, Bar::class], $types); // trailing null trimmed
+        $this->assertSame([Plant::class, null, Animal::class], $types); // trailing null trimmed
     }
 
     public function testDetectTypesWithoutParameters(): void
@@ -47,38 +47,38 @@ final class TagBasedStrategyTest extends TestCase
 
     public function testDetectTypesUsingTagReader(): void
     {
-        $closure = function (Foo $foo, int $qux, Bar $bar, $wham) {
+        $closure = function (Plant $foo, int $qux, Animal $bar, $wham) {
         };
         $reflection = new ReflectionFunction($closure);
         $types = TagBasedStrategy::detectTypes($reflection, TagBasedStrategy::tagReader());
-        $this->assertSame([Foo::class, null, Bar::class], $types); // trailing null trimmed
+        $this->assertSame([Plant::class, null, Animal::class], $types); // trailing null trimmed
     }
 
     public function testDetectTypesUsingTagReaderWithTags(): void
     {
         /**
-         * @param Foo $foo [wire]
+         * @param Plant $foo [wire]
          * @param int $qux [notreally:nothing-sorry]
-         * @param Bar $bar [wire:overridden]
+         * @param Animal $bar [wire:overridden]
          * @param $wham [wire:My\Name\Space\Wham]
          * @param $ham [wire:redundant]
          */
-        $closure = function (Foo $foo, int $qux, Bar $bar, $wham) {
+        $closure = function (Plant $foo, int $qux, Animal $bar, $wham) {
         };
         $reflection = new ReflectionFunction($closure);
         $types = TagBasedStrategy::detectTypes($reflection, TagBasedStrategy::tagReader());
-        $this->assertSame([Foo::class, null, 'overridden', \My\Name\Space\Wham::class], $types);
+        $this->assertSame([Plant::class, null, 'overridden', \My\Name\Space\Wham::class], $types);
     }
 
     public function testEmptyWireTagIndicatesNoWiring(): void
     {
         /**
-         * @param Foo $foo [wire:]
+         * @param Plant $foo [wire:]
          * @param int $qux
-         * @param Bar $bar [wire:]
+         * @param Animal $bar [wire:]
          * @param $wham
          */
-        $closure = function (Foo $foo, int $qux, Bar $bar, $wham) {
+        $closure = function (Plant $foo, int $qux, Animal $bar, $wham) {
         };
         $reflection = new ReflectionFunction($closure);
         $types = TagBasedStrategy::detectTypes($reflection, TagBasedStrategy::tagReader());
@@ -89,14 +89,14 @@ final class TagBasedStrategyTest extends TestCase
     {
         $reflection = new ReflectionMethod($this, 'otherMethod');
         $detector = TagBasedStrategy::typeDetector();
-        $this->assertSame([Foo::class, null, Bar::class], $detector($reflection)); // trailing null is trimmed !
+        $this->assertSame([Plant::class, null, Animal::class], $detector($reflection)); // trailing null is trimmed !
     }
 
     public function testTypeDetectorWithTags(): void
     {
         $reflection = new ReflectionMethod($this, 'otherMethod');
         $detector = TagBasedStrategy::typeDetector(TagBasedStrategy::tagReader());
-        $this->assertSame([Foo::class, null, 'overridden', \My\Name\Space\Wham::class], $detector($reflection));
+        $this->assertSame([Plant::class, null, 'overridden', \My\Name\Space\Wham::class], $detector($reflection));
     }
 
     public function testTagDetector(): void
@@ -142,9 +142,9 @@ final class TagBasedStrategyTest extends TestCase
         /**
          * @param $foo [wire:foobar]
          * @param Barbar $bAr [wire:whatever-it-is-you-like]
-         * @param Foo|Bar|null $qux [wire:1234]
+         * @param Plant|Animal|null $qux [wire:1234]
          * @param this is invalid $wham [wire:Name\Space\Wham]
-         * @param $facepalm [other:tag-prece:ding] [wire:Dakujem\Wire\Tests\Foo] [and:another]
+         * @param $facepalm [other:tag-prece:ding] [wire:Dakujem\Wire\Tests\Plant] [and:another]
          * @param $empty [wire:]
          * @param self $notag
          */
@@ -156,7 +156,7 @@ final class TagBasedStrategyTest extends TestCase
             'bAr' => 'whatever-it-is-you-like',
             'qux' => '1234',
             'wham' => 'Name\Space\Wham',
-            'facepalm' => 'Dakujem\Wire\Tests\Foo',
+            'facepalm' => 'Dakujem\Wire\Tests\Plant',
             'empty' => '',
             'notag' => null,
         ], $annotations);
@@ -200,25 +200,25 @@ final class TagBasedStrategyTest extends TestCase
     }
 
     /**
-     * @param Foo $foo [wire:genie]
+     * @param Plant $foo [wire:genie]
      * @param int $theAnswer [wire:Dakujem\Wire\Tests\Bar]
      */
-    public function methodFoo(Foo $foo, int $theAnswer)
+    public function methodFoo(Plant $foo, int $theAnswer)
     {
     }
 
-    public static function methodBar(Foo $foo, int $theAnswer)
+    public static function methodBar(Plant $foo, int $theAnswer)
     {
     }
 
     /**
-     * @param Foo $foo [wire]
+     * @param Plant $foo [wire]
      * @param int $qux [notreally:nothing-sorry]
-     * @param Bar $bar [wire:overridden]
+     * @param Animal $bar [wire:overridden]
      * @param $wham [wire:My\Name\Space\Wham]
      * @param $ham [wire:redundant]
      */
-    private function otherMethod(Foo $foo, int $qux, Bar $bar, $wham)
+    private function otherMethod(Plant $foo, int $qux, Animal $bar, $wham)
     {
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Dakujem\Wire\Tests;
 
+use Dakujem\Wire\Attributes\Skip;
 use Dakujem\Wire\Exceptions\UnresolvableArgument;
 use Dakujem\Wire\Genie;
 
@@ -34,7 +35,7 @@ final class GenieWithAttributeBasedStrategyTest extends GenieBaseTest
         $rv = $g->invoke([$this, 'methodAttributeOverride'], 42);
 
         $this->assertCount(3, $rv);
-        $this->assertInstanceOf(Baz::class, $rv[0]);
+        $this->assertInstanceOf(Sheep::class, $rv[0]);
         $this->assertInstanceOf(Genie::class, $rv[1]);
         $this->assertSame(42, $rv[2]);
     }
@@ -55,10 +56,10 @@ final class GenieWithAttributeBasedStrategyTest extends GenieBaseTest
             'Unresolvable: \'theAnswer\'.'
         );
 
-        $func = function (Foo $foo, int $theAnswer) {
+        $func = function (Plant $foo, int $theAnswer) {
             return [$foo, $theAnswer];
         };
-        $func2 = function (Foo $foo, int $theAnswer = null) {
+        $func2 = function (Plant $foo, int $theAnswer = null) {
             return [$foo, $theAnswer];
         };
 
@@ -74,5 +75,34 @@ final class GenieWithAttributeBasedStrategyTest extends GenieBaseTest
             UnresolvableArgument::class,
             'Unresolvable: \'theAnswer\'.'
         );
+    }
+
+    public function testAutomaticResolutionCanBeSkipped()
+    {
+        $g = new Genie($sleeve = ContainerProvider::createContainer());
+        $func = function (Animal $bar) {
+            return func_get_args();
+        };
+        // normally resolves to Bar instance
+        $this->assertSame([$sleeve->get(Animal::class)], $g->invoke($func));
+
+        $funcSkipped = function (#[Skip] Animal $bar) {
+            return func_get_args();
+        };
+        $sheep = $sleeve->get(Sheep::class); // Sheep, not Animal !
+        // but here we turn the detection off and provide our own instance (of Baz)
+        $this->assertSame([$sheep], $g->invoke($funcSkipped, $sheep));
+    }
+
+    public function testConstruction()
+    {
+        $g = new Genie($sleeve = ContainerProvider::createContainer());
+        $rv = $g->construct(WeepingWillow::class);
+        $this->assertInstanceOf(WeepingWillow::class, $rv);
+        $this->assertSame([], $rv->args);
+
+        $rv = $g->construct(HollowWillow::class);
+        $this->assertInstanceOf(HollowWillow::class, $rv);
+        $this->assertSame([$sleeve->get(Plant::class)], $rv->args);
     }
 }

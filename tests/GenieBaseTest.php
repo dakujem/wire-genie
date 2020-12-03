@@ -6,7 +6,6 @@ namespace Dakujem\Wire\Tests;
 
 use Dakujem\Wire\Attributes\Wire;
 use Dakujem\Wire\Genie;
-use Dakujem\Wire\TagBasedStrategy;
 use PHPUnit\Framework\TestCase;
 
 require_once 'AssertsErrors.php';
@@ -21,7 +20,6 @@ abstract class GenieBaseTest extends TestCase
 
     protected function _FillsInArguments(Genie $g)
     {
-        $g = new Genie(ContainerProvider::createContainer(), new TagBasedStrategy());
         $func = function () {
             return func_get_args();
         };
@@ -32,18 +30,18 @@ abstract class GenieBaseTest extends TestCase
 
     protected function _InvokesAnyCallableTypeAndFillsInUnresolvedArguments(Genie $g)
     {
-        $func = function (Foo $foo, int $theAnswer) {
+        $func = function (Plant $foo, int $theAnswer) {
             return [$foo, $theAnswer];
         };
         $invokable = new class {
-            public function __invoke(Foo $foo, int $theAnswer)
+            public function __invoke(Plant $foo, int $theAnswer)
             {
                 return [$foo, $theAnswer];
             }
         };
 
         $check = function ($args) {
-            $this->assertInstanceOf(Foo::class, $args[0]);
+            $this->assertInstanceOf(Plant::class, $args[0]);
             $this->assertSame(42, $args[1]);
         };
 
@@ -59,6 +57,8 @@ abstract class GenieBaseTest extends TestCase
         $check($rv);
     }
 
+    #---------------------------------
+
     /**
      * Invokes a Closure and binds $this to the object given via the first parameter.
      *
@@ -71,39 +71,28 @@ abstract class GenieBaseTest extends TestCase
         return $closure->bindTo(is_object($objectOrClass) ? $objectOrClass : null, $objectOrClass)();
     }
 
-//    public function testGenieUsesCorrectDefault()
-//    {
-//        $invoker = new Genie(ContainerProvider::createContainer());
-//        $self = $this;
-//        $this->with($invoker, function () use ($self) {
-//            $self->assertInstanceOf(AttributeBasedStrategy::class, $this->core);
-//        });
-//    }
-
-
-
     #---------------------------------
 
-    public function methodFoo(Foo $foo, int $theAnswer): array
+    public function methodFoo(Plant $foo, int $theAnswer): array
     {
         return func_get_args();
     }
 
-    public static function methodBar(Foo $foo, int $theAnswer): array
+    public static function methodBar(Plant $foo, int $theAnswer): array
     {
         return func_get_args();
     }
 
     /**
-     * @param Bar $bar [wire:Dakujem\Wire\Tests\Baz]
+     * @param Animal $animal [wire:Dakujem\Wire\Tests\Sheep]
      * @param mixed $theAnswer [wire:genie]
      */
-    public function methodTagOverride(Bar $bar, $theAnswer): array
+    public function methodTagOverride(Animal $animal, $theAnswer): array
     {
         return func_get_args();
     }
 
-    public function methodAttributeOverride(#[Wire(Baz::class)] Bar $bar, #[Wire('genie')] $theAnswer): array
+    public function methodAttributeOverride(#[Wire(Sheep::class)] Animal $animal, #[Wire('genie')] $theAnswer): array
     {
         return func_get_args();
     }

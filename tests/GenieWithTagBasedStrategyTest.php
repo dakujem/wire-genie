@@ -37,7 +37,7 @@ final class GenieWithTagBasedStrategyTest extends GenieBaseTest
         // tags should be read by default
         $rv = $invoker->invoke([$this, 'methodTagOverride'], 42);
         $this->assertCount(3, $rv);
-        $this->assertInstanceOf(Baz::class, $rv[0]);
+        $this->assertInstanceOf(Sheep::class, $rv[0]);
         $this->assertInstanceOf(WireGenie::class, $rv[1]);
         $this->assertSame(42, $rv[2]);
     }
@@ -45,22 +45,22 @@ final class GenieWithTagBasedStrategyTest extends GenieBaseTest
     public function testAutomaticResolutionCanBeOverridden()
     {
         $invoker = new Genie($sleeve = ContainerProvider::createContainer(), new TagBasedStrategy());
-        $func = function (Bar $bar) {
+        $func = function (Animal $bar) {
             return func_get_args();
         };
         // normally resolves to Bar instance
-        $this->assertSame([$sleeve->get(Bar::class)], $invoker->invoke($func));
+        $this->assertSame([$sleeve->get(Animal::class)], $invoker->invoke($func));
 
         /**
-         * @param Bar $bar [wire:] <-- empty tag indicates no wiring
+         * @param Animal $bar [wire:] <-- this empty tag indicates "no wiring"
          * @return array
          */
-        $funcOverridden = function (Bar $bar) {
+        $funcOverridden = function (Animal $bar) {
             return func_get_args();
         };
-        $baz = $sleeve->get(Baz::class);
-        // but here we turn the detection off and provide our own instance (of Baz)
-        $this->assertSame([$baz], $invoker->invoke($funcOverridden, $baz));
+        $sheep = $sleeve->get(Sheep::class);
+        // but here we turn the detection off and provide our own instance (of Sheep)
+        $this->assertSame([$sheep], $invoker->invoke($funcOverridden, $sheep));
     }
 
     public function testConstructor()
@@ -72,7 +72,7 @@ final class GenieWithTagBasedStrategyTest extends GenieBaseTest
 
         $rv = $invoker->construct(HollowWillow::class);
         $this->assertInstanceOf(HollowWillow::class, $rv);
-        $this->assertSame([$sleeve->get(Foo::class)], $rv->args);
+        $this->assertSame([$sleeve->get(Plant::class)], $rv->args);
     }
 
     public function testInvalidInvocation1()
@@ -92,10 +92,10 @@ final class GenieWithTagBasedStrategyTest extends GenieBaseTest
     {
         $invoker = new Genie(ContainerProvider::createContainer(), new TagBasedStrategy());
 
-        $func = function (Foo $foo, int $theAnswer) {
+        $func = function (Plant $foo, int $theAnswer) {
             return [$foo, $theAnswer];
         };
-        $func2 = function (Foo $foo, int $theAnswer = null) {
+        $func2 = function (Plant $foo, int $theAnswer = null) {
             return [$foo, $theAnswer];
         };
 
@@ -132,7 +132,7 @@ final class GenieWithTagBasedStrategyTest extends GenieBaseTest
         $this->assertSame(1, $reflectorCalled);
         $this->assertSame(1, $detectorCalled);
         $this->assertSame(1, $proxyCalled);
-        $this->assertSame($sleeve->get(Bar::class), $bar);
+        $this->assertSame($sleeve->get(Animal::class), $bar);
         $this->assertSame(42, $fourtyTwo);
     }
 
@@ -155,11 +155,11 @@ final class GenieWithTagBasedStrategyTest extends GenieBaseTest
             return TagBasedStrategy::reflectionOf($target);
         };
         $invoker = new Genie($sleeve, new TagBasedStrategy($detector, $proxy, $reflector));
-        [$baz, $genie, $fourtyTwo, $foo] = $invoker->invoke([$this, 'methodTagOverride'], 42, 'foobar');
+        [$sheep, $genie, $fourtyTwo, $foo] = $invoker->invoke([$this, 'methodTagOverride'], 42, 'foobar');
         $this->assertSame(1, $reflectorCalled);
         $this->assertSame(1, $detectorCalled);
         $this->assertSame(2, $proxyCalled);
-        $this->assertSame($sleeve->get(Baz::class), $baz); // Baz, not Bar !
+        $this->assertSame($sleeve->get(Sheep::class), $sheep); // Sheep, not Animal !
         $this->assertSame($sleeve->get('genie'), $genie);
         $this->assertSame(42, $fourtyTwo); // rest arguments trail
         $this->assertSame('foobar', $foo); // rest arguments trail
