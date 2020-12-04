@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Dakujem\Wire\Tests;
 
+use Throwable;
+
 /**
  * AssertsErrors
  *
@@ -21,23 +23,23 @@ trait AssertsErrors
      * @link https://gist.github.com/VladaHejda/8826707 [source]
      *
      * @param callable $callable
-     * @param string $expectedException class name of the expected exception
+     * @param string|null $expectedThrowable class name of the expected exception
      * @param null|int $expectedCode
      * @param null|string $expectedMessage
      */
     protected function assertException(
         callable $callable,
-        $expectedException = 'Exception',
-        $expectedMessage = null,
-        $expectedCode = null
+        ?string $expectedThrowable = null,
+        ?string $expectedMessage = null,
+        ?int $expectedCode = null
     ) {
-        $expectedException = ltrim((string)$expectedException, '\\');
-        if (!class_exists($expectedException) && !interface_exists($expectedException)) {
-            $this->fail(sprintf('An exception of type "%s" does not exist.', $expectedException));
+        $expectedThrowable = $expectedThrowable !== null ? ltrim((string)$expectedThrowable, '\\') : Throwable::class;
+        if (!class_exists($expectedThrowable) && !interface_exists($expectedThrowable)) {
+            $this->fail(sprintf('An exception of type "%s" does not exist.', $expectedThrowable));
         }
         try {
             $callable();
-        } catch (\Exception $e) {
+        } catch (Throwable $e) {
             $class = get_class($e);
             $message = $e->getMessage();
             $code = $e->getCode();
@@ -48,7 +50,7 @@ trait AssertsErrors
                 $errorMessage .= sprintf(' (code was %d)', $code);
             }
             $errorMessage .= '.';
-            $this->assertInstanceOf($expectedException, $e, $errorMessage);
+            $this->assertInstanceOf($expectedThrowable, $e, $errorMessage);
             if ($expectedMessage !== null) {
                 $this->assertSame($expectedMessage, $message, sprintf('Failed asserting the message of thrown %s.', $class));
             }
@@ -58,8 +60,8 @@ trait AssertsErrors
             return;
         }
         $errorMessage = 'Failed asserting that exception';
-        if (strtolower($expectedException) !== 'exception') {
-            $errorMessage .= sprintf(' of type %s', $expectedException);
+        if (strtolower($expectedThrowable) !== 'exception') {
+            $errorMessage .= sprintf(' of type %s', $expectedThrowable);
         }
         $errorMessage .= ' was thrown.';
         $this->fail($errorMessage);
