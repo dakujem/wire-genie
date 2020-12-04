@@ -117,7 +117,7 @@ final class TagBasedStrategyTest extends TestCase
         }));
         $this->assertInstanceOf(ReflectionFunctionAbstract::class, TagBasedStrategy::reflectionOfCallable('\fopen'));
         $this->assertInstanceOf(ReflectionFunctionAbstract::class, TagBasedStrategy::reflectionOfCallable([$this, 'methodFoo']));
-        $this->assertInstanceOf(ReflectionFunctionAbstract::class, TagBasedStrategy::reflectionOfCallable(self::class . '::methodBar'));
+        $this->assertInstanceOf(ReflectionFunctionAbstract::class, TagBasedStrategy::reflectionOfCallable(self::class . '::thisMethodIsStatic'));
     }
 
     public function testReflectionOfConstructors()
@@ -131,7 +131,7 @@ final class TagBasedStrategyTest extends TestCase
     {
         $this->assertInstanceOf(ReflectionFunctionAbstract::class, TagBasedStrategy::reflectionOf('\fopen'));
         $this->assertInstanceOf(ReflectionFunctionAbstract::class, TagBasedStrategy::reflectionOf([$this, 'methodFoo']));
-        $this->assertInstanceOf(ReflectionFunctionAbstract::class, TagBasedStrategy::reflectionOf(self::class . '::methodBar'));
+        $this->assertInstanceOf(ReflectionFunctionAbstract::class, TagBasedStrategy::reflectionOf(self::class . '::thisMethodIsStatic'));
         $this->assertSame(null, TagBasedStrategy::reflectionOf(NoConstructor::class));
         $this->assertInstanceOf(ReflectionFunctionAbstract::class, TagBasedStrategy::reflectionOf(HasConstructor::class));
         $this->assertInstanceOf(ReflectionFunctionAbstract::class, TagBasedStrategy::reflectionOf(InheritsConstructor::class));
@@ -207,7 +207,7 @@ final class TagBasedStrategyTest extends TestCase
     {
     }
 
-    public static function methodBar(Plant $foo, int $theAnswer)
+    public static function thisMethodIsStatic(Plant $foo, int $theAnswer)
     {
     }
 

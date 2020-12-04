@@ -53,7 +53,7 @@ abstract class GenieBaseTest extends TestCase
         $check($rv);
         $rv = $g->invoke('\sleep', 0);
         $this->assertSame(0, $rv); // sleep returns 0 on success
-        $rv = $g->invoke(self::class . '::methodBar', 42);
+        $rv = $g->invoke(self::class . '::thisMethodIsStatic', 42);
         $check($rv);
     }
 
@@ -78,7 +78,7 @@ abstract class GenieBaseTest extends TestCase
         return func_get_args();
     }
 
-    public static function methodBar(Plant $foo, int $theAnswer): array
+    public static function thisMethodIsStatic(Plant $foo, int $theAnswer): array
     {
         return func_get_args();
     }
