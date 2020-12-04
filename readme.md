@@ -28,7 +28,7 @@ Wire with genie powers.
 
 ## 🚧 The documentation is under construction 🚧
 
-The dox is not yet finished. Feel free to experiment though, the genie has great powers! 💪
+The dox is not finished yet. Feel free to experiment though, the genie has great powers! 💪
 
 ---
 
@@ -36,7 +36,7 @@ The dox is not yet finished. Feel free to experiment though, the genie has great
 Automatically wire services from a service container to **invoke callables** or **construct objects**.
 
 ```php
-$container = new Container([
+$container = new Any\Psr11\Container([
     Thing::class => new Thing(),
     MyService::class => new MyService(),
 ]);
@@ -141,11 +141,6 @@ Normally, however, you want to wire your dependencies when building your app's s
 > (this is called "Inversion of Control", "IoC").
 
 
-## Compatibility
-
-Any PSR-11 container can be used.
-
-
 ## Integration
 
 As with many other third-party libraries,
@@ -200,6 +195,11 @@ and throws if the requested service does not match at least one of the whitelist
 A custom _strategy_ can be inserted into `Genie`,
 and the default `AttributeBasedStrategy` allows for customization of the resolver mechanism,
 thus providing ultimate configurability.
+
+
+## Compatibility
+
+Any PSR-11 container can be used.
 
 
 ## Wonderful lamp
