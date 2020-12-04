@@ -63,14 +63,32 @@ class Sheep extends Animal
 {
 }
 
+class Wolf extends Animal
+{
+}
+
+class Frog extends Animal
+{
+}
+
+class Lion extends Animal
+{
+}
+class Elephant extends Animal
+{
+}
+
 class NoConstructor
 {
 }
 
 class HasConstructor
 {
-    public function __construct()
+    public $animal = null;
+
+    public function __construct(Animal $animal)
     {
+        $this->animal = $animal;
     }
 }
 

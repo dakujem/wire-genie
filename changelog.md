@@ -18,7 +18,7 @@ All deprecated classes and methods have been removed.
 
 The default strategy for argument type detection and resolution is now based on _native attributes_,
 but function-wise is a superset of the legacy one based on `@param` annotations,\
-i.e. you can model the same functionality and do much more.
+i.e. you can model the same functionality and do much more, faster.
 
 
 ### Migrating to v3 from v2
