@@ -44,7 +44,7 @@ Allows you to:
 - **invoke any callables**
 - **construct any objects**
 
-... with high level of control over the arguments. 💪
+... with control over the arguments. 💪
 
 
 ## Usage
@@ -72,26 +72,31 @@ That is only the basis, the process is customizable and more powerful.
 
 For each parameter it is possible to:
 - override type-hint and wire an explicit dependency (override the type-hint)
-- construct missing services on demand (resolves cascading dependencies too)
 - skip wiring (treat as unresolvable)
 - override value (bypass the container)
 
 ```php
-// override type-hint(s)
-$callable = function (#[Wire(MyService::class)] ServiceInterface $service, #[Wire(Thing::class)] $thing){ ... };
+/**
+ * Override type-hint(s)
+ *
+ * @param ServiceInterface $service [wire:App\MyService]
+ * @param Thing $service [wire:Some\Thing]
+ */
+$callable = function (ServiceInterface $service, $thing){ ... };
 $value  = $g->invoke($callable);
 
-// construct object(s) if not present in the container
-$callable = function (#[Hot] Something $some, #[Make(Thing::class)] $thing){ ... };
-$value  = $g->invoke($callable);
-
-// provide arguments for scalar-type, no-type and otherwise unresolvable parameters
+/**
+* Provide arguments for scalar-type, no-type and otherwise unresolvable parameters
+ */
 $callable = function (string $question, MyService $service, int $answer){ ... };
 $g->invoke($callable, 'The Ultimate Question of Life, the Universe, and Everything.', 42);
-$g->invoke($callable, answer: 42, question: 'The Ultimate Question of Life, the Universe, and Everything.',);
 
-// skip wiring for a parameter
-$callable = function (#[Skip] MyService $service){ ... };
+/**
+ * Skip wiring for a parameter (provide your own service)
+ *
+ * @param MyService $service [wire:]  <--- do not wire this parameter
+ */
+$callable = function (MyService $service){ ... };
 $g->invoke($callable, new MyService(...)); // provide your own argument(s)
 ```
 
@@ -107,16 +112,14 @@ Genie::construct( string $target, ...$pool );
 
 The resolution algorithm works like the following. If any step succeeds, the rest is skipped.\
 For each parameter...
-1. If the parameter name matches a _named argument_ from the pool, use it.
-2. If `#[Skip]` hint is present, skip steps 3-6 and treat the parameter as unresolvable.
-3. If a `#[Wire(Identifier::class)]` hint (attribute) is present, resolve the hinted identifier using the container.
-4. Resolve the type-hinted identifier using the container.
-5. If `#[Hot]` hint is present, attempt to create the type-hinted class. Resolve cascading dependencies.
-6. If `#[Make(Name::class)]` hint is present, attempt to create the hinted class. Resolve cascading dependencies.
-7. When a parameter is unresolvable, try filling in an argument from the pool.
-8. If a default parameter value is defined, use it.
-9. If the parameter is nullable, use `null`.
-10. Fail utterly.
+1. Look for a "wire tag" in the `@param` annotation, resolve its identifier from the container
+   - a wire tag with an identifier looks like this: `@param $name [wire:identifier]`,
+     where `identifier` may be a full class name or any string
+2. If an empty wire tag is present, treat the parameter as unresolvable
+   - an empty wire tag looks like this: `@param $name [wire:]`
+3. Resolve the type-hinted identifier using the container.
+4. When a parameter is unresolvable, try filling in an argument from the pool.
+5. Try to skip the parameter. Fails when it has no default value. You need to provide arguments to the pool.
 
 
 ### Hints / attributes
@@ -181,7 +184,7 @@ with methods like the following one:
  * Returns the callable's return value.
  * Also allows to create objects passing in a class name.
  */ 
-public function call(callable|string $target, ...$pool): mixed
+public function call(/*callable|string*/ $target, ...$pool): mixed
 {
     return Genie::employ($this->container)($target, ...$pool);
 }
@@ -221,7 +224,7 @@ and throws if the requested service does not match at least one of the whitelist
 ## Customization
 
 A custom _strategy_ can be inserted into `Genie`,
-and the default `AttributeBasedStrategy` allows for customization of the resolver mechanism,
+and the default `TagBasedStrategy` allows for customization of the resolver mechanism,
 thus providing ultimate configurability.
 
 
