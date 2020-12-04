@@ -4,6 +4,9 @@ php:
   - 8.0
   - nightly
 
+env:
+  - XDEBUG_MODE=coverage
+
 matrix:
   fast_finish: true
   allow_failures:
