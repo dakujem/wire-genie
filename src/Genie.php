@@ -62,12 +62,12 @@ final class Genie implements Invoker, Constructor
      * Returns the result of the call.
      *
      * @param callable $target callable to be invoked
-     * @param mixed ...$staticArgs static argument pool
+     * @param mixed ...$pool static argument pool
      * @return mixed result of the $target callable invocation
      */
-    public function invoke(callable $target, ...$staticArgs): mixed
+    public function invoke(callable $target, ...$pool): mixed
     {
-        return $target(...$this->resolveArguments($target, ...$staticArgs));
+        return $target(...$this->resolveArguments($target, ...$pool));
     }
 
     /**
@@ -76,12 +76,12 @@ final class Genie implements Invoker, Constructor
      * Returns the constructed instance.
      *
      * @param string $target target class name
-     * @param mixed ...$staticArgs static argument pool
+     * @param mixed ...$pool static argument pool
      * @return mixed the constructed class instance
      */
-    public function construct(string $target, ...$staticArgs): mixed
+    public function construct(string $target, ...$pool): mixed
     {
-        return new $target(...$this->resolveArguments($target, ...$staticArgs));
+        return new $target(...$this->resolveArguments($target, ...$pool));
     }
 
     /**
