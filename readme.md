@@ -22,8 +22,8 @@ Wire with genie powers.
 - [x] compatibility (for annotations/wire tags)
 - [x] changelog / migration guide
 - [x] REJECTED split package for "providers" (provider, limiter)? (`d\Contain`, `d\Deal`, `d\Dispense`)
-- [ ] TODO(s) in code
-- [ ] coverage
+- [x] TODO(s) in code
+- [x] coverage
 
 ---
 
