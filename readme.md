@@ -13,7 +13,12 @@ Wire with genie powers.
 
 
 
-## TODOs 🚧
+## 🚧 The documentation is under construction 🚧
+
+The documentation is not fully finished yet, but **the code is ready**.\
+Feel free to experiment, the genie has great powers! 💪
+
+TODOs
 
 - [x] namespace
 - [x] deprecations
@@ -27,26 +32,22 @@ Wire with genie powers.
 
 ---
 
-## 🚧 The documentation is under construction 🚧
 
-The dox is not finished yet. Feel free to experiment though, the genie has great powers! 💪
 
----
+
 
 A superpowered `call_user_func`? Yup! And more.
 
 Wire Genie uses your PSR-11 service container to "magically" provide arguments (dependencies).
 
 Allows you to:
-- invoke any callables
-- construct any objects
+- **invoke any callables**
+- **construct any objects**
 
 ... with high level of control over the arguments. 💪
 
 
 ## Usage
-
-Automatically wire services from a service container to **invoke callables** or **construct objects**.
 
 ```php
 $container = new Any\Psr11\Container([
@@ -245,7 +246,7 @@ $genie->construct(Palace::class);
 
 ## Flying carpet
 
-We've already got a lamp and a genie... so?
+We've already got a lamp 🪔 and a genie 🧞 ... so?
 
 
 ## Installation
