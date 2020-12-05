@@ -126,7 +126,14 @@ final class AttributeBasedStrategy
             /** @var ParamRef $param */
             foreach ($detector($target) as $param) {
                 if (!$param instanceof ParamRef) {
-                    throw new InvalidConfiguration();
+                    throw new InvalidConfiguration(
+                        'The detector produced a collection containing an invalid element ' .
+                        sprintf(
+                            'of type \'%s\' but only instances of %s are accepted.',
+                            is_object($param) ? $param::class : gettype($param),
+                            ParamRef::class
+                        )
+                    );
                 }
                 // skip variadic parameter(s)
                 if (!$param->isVariadic()) {
@@ -137,12 +144,6 @@ final class AttributeBasedStrategy
             return array_merge(
                 $resolved,
                 array_reverse($reversedPool),
-
-// TODO previously I filtered the named arguments out, but hey, PHP enables to use named args as variadic! This needs some testing/simulation
-//                // only yield the args from the pool with numeric indices:
-//                array_reverse(
-//                    array_filter($reversedPool, fn(int|string $key): bool => is_int($key), ARRAY_FILTER_USE_KEY)
-//                )
             );
         };
     }
