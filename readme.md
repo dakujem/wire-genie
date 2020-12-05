@@ -13,11 +13,15 @@ Wire with genie powers.
 
 
 
+
+---
+
 ## 🚧 The documentation is under construction 🚧
 
-The documentation is not fully finished yet, but **the code is ready**.\
-Feel free to experiment, the genie has great powers! 💪
+... but **the code is ready**.\
+Feel free to dive in, the genie has great powers! 💪
 
+<!--
 TODOs
 
 - [x] namespace
@@ -29,6 +33,7 @@ TODOs
 - [x] REJECTED split package for "providers" (provider, limiter)? (`d\Contain`, `d\Deal`, `d\Dispense`)
 - [x] TODO(s) in code
 - [x] coverage
+-->
 
 ---
 
