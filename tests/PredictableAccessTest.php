@@ -11,7 +11,6 @@ use Dakujem\Wire\Lamp;
 use Dakujem\Wire\Limiter;
 use Dakujem\Wire\PredictableAccess;
 use Dakujem\Wire\Simpleton;
-use Dakujem\Wire\TagBasedStrategy;
 use LogicException;
 use PHPUnit\Framework\TestCase;
 
@@ -51,6 +50,5 @@ final class PredictableAccessTest extends TestCase
         $test(new Limiter($c = new Sleeve(), []));
         $test(new Simpleton());
         $test(new AttributeBasedStrategy());
-        $test(new TagBasedStrategy());
     }
 }

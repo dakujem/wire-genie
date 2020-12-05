@@ -6,7 +6,6 @@ namespace Dakujem\Wire;
 
 use Dakujem\Wire\Exceptions\Unresolvable;
 use Dakujem\Wire\Exceptions\UnresolvableCallArguments;
-use LogicException;
 use Psr\Container\ContainerInterface as Container;
 
 /**
@@ -164,38 +163,5 @@ final class Genie implements Invoker, Constructor
     public static function employ(Container|self $source, ?callable $core = null): self
     {
         return new self($source instanceof self ? $source->container : $source, $core);
-    }
-
-    /**
-     * @deprecated Back Compatibility only, will be removed in v3.
-     */
-    public function __call(string $name, array $arguments)
-    {
-        if ($name === 'provideSafe') {
-            throw new LogicException(sprintf(
-                'The method `WireGenie::%s` was removed, use `provide` instead.',
-                $name
-            ));
-        }
-        if ($name === 'provideStrict') {
-            throw new LogicException(sprintf(
-                'The method `WireGenie::%s` was removed, use `provide` instead. ' .
-                'The method was redundant, as using type hints properly yields same functionality.',
-                $name
-            ));
-        }
-        throw new LogicException(sprintf('Call to undefined method %s::%s', static::class, $name));
-    }
-
-    /**
-     * @deprecated Back Compatibility only, will be removed in v3.
-     */
-    public static function __callStatic(string $name, array $arguments)
-    {
-        if ($name === 'resolveServicesFillingInStaticArguments') {
-            trigger_error('The method `WireInvoker::resolveServicesFillingInStaticArguments` has been moved to `TagBasedStrategy` class.', E_USER_DEPRECATED);
-            return TagBasedStrategy::resolveServicesFillingInStaticArguments(...$arguments);
-        }
-        throw new LogicException(sprintf('Call to undefined static method %s::%s', static::class, $name));
     }
 }

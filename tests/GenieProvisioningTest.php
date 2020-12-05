@@ -6,6 +6,7 @@ namespace Dakujem\Wire\Tests;
 
 use Dakujem\Wire\Invoker;
 use Dakujem\Wire\Genie;
+use Dakujem\Wire\Limiter;
 use Dakujem\Wire\Simpleton;
 use Dakujem\WireLimiter;
 use LogicException;
@@ -54,7 +55,7 @@ final class GenieProvisioningTest extends TestCase
     public function testThrow()
     {
         $sleeve = ContainerProvider::createContainer();
-        $wg = new Genie(new WireLimiter($sleeve, [])); // will throw when accessing any service
+        $wg = new Genie(new Limiter($sleeve, [])); // will throw when accessing any service
 
         $this->expectException(ContainerExceptionInterface::class);
         $wg->provide('self');
@@ -82,21 +83,5 @@ final class GenieProvisioningTest extends TestCase
         $this->assertSame($expected, $p->invoke(function (...$args) {
             return $args;
         }));
-    }
-
-    public function testStrictProvisioning()
-    {
-        // method removed
-        $this->expectException(LogicException::class);
-        $sleeve = ContainerProvider::createContainer();
-        (new Genie($sleeve))->provideStrict('whatever', 'genie', Genie::class);
-    }
-
-    public function testSafeProvisioning()
-    {
-        // method removed
-        $this->expectException(LogicException::class);
-        $sleeve = ContainerProvider::createContainer();
-        (new Genie($sleeve))->provideSafe('whatever', 'genie', Genie::class);
     }
 }

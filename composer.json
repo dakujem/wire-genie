@@ -19,8 +19,7 @@
   "autoload": {
     "psr-4": {
       "Dakujem\\Wire\\": "src/"
-    },
-    "files": ["compat.php"]
+    }
   },
   "autoload-dev": {
     "psr-4": {

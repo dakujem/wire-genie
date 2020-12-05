@@ -26,7 +26,7 @@ final class LimiterTest extends TestCase
         $wl->get('foo');
     }
 
-    public function testThrowWireLimiterException(): void
+    public function testThrowServiceNotWhitelistedException(): void
     {
         $sleeve = ContainerProvider::createContainer();
         $wl = new Limiter($sleeve, [
