@@ -14,6 +14,8 @@ use stdClass;
  */
 final class SimpletonTest extends TestCase
 {
+    use WithStuff;
+
     public function testCallable(): void
     {
         $ip = new Simpleton();
@@ -95,5 +97,43 @@ final class SimpletonTest extends TestCase
         });
 
         $this->assertSame(2, $hasBeenInvokedTwice); // ensure the callables were actually called
+    }
+
+    public function testCreatedUsingMethodConstruct(): void
+    {
+        $ip = new Simpleton();
+        $sheep = $ip->construct(Sheep::class);
+        $this->assertInstanceOf(Sheep::class, $sheep);
+    }
+
+    public function testProvidesArgumentsForConstruction(): void
+    {
+        $ip = new Simpleton(new Constant(0.0), new Coefficient(1.0));
+        $offset = $ip->construct(Offset::class);
+        $this->assertInstanceOf(Offset::class, $offset);
+    }
+
+    public function testInvocationTypeSwitch()
+    {
+        $ip = new Simpleton(42.0);
+
+        $constant = $ip(Constant::class);
+        $this->assertInstanceOf(Constant::class, $constant);
+
+        $hasBeenCalled = false;
+        $coefficient = $ip(function (float $factor) use (&$hasBeenCalled) {
+            $hasBeenCalled = true;
+            return new Coefficient($factor);
+        });
+        $this->assertTrue($hasBeenCalled);
+        $this->assertInstanceOf(Coefficient::class, $coefficient);
+
+        $self = $this;
+        $this->with($coefficient, function () use ($self) {
+            $self->assertSame(42.0, $this->factor);
+        });
+        $this->with($constant, function () use ($self) {
+            $self->assertSame(42.0, $this->value);
+        });
     }
 }

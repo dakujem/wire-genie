@@ -7,8 +7,6 @@ namespace Dakujem\Wire\Tests;
 use Dakujem\Wire\Inspector;
 use PHPUnit\Framework\TestCase;
 
-require_once 'testHelperClasses.php';
-
 /**
  * @internal test
  */

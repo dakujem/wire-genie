@@ -11,8 +11,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerExceptionInterface;
 use Throwable;
 
-require_once 'testHelperClasses.php';
-
 /**
  * @internal test
  */

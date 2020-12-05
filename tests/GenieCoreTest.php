@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace Dakujem\Wire\Tests;
 
+use Dakujem\Sleeve;
 use Dakujem\Wire\Genie;
 use PHPUnit\Framework\TestCase;
-
-require_once 'testHelperClasses.php';
 
 /**
  * @internal test
  */
 class GenieCoreTest extends TestCase
 {
+    use WithStuff;
+
     public function testGenieUsesACoreProperlyPassingArguments()
     {
         $passed = [];
@@ -34,5 +35,20 @@ class GenieCoreTest extends TestCase
         $this->assertSame($target, $passed[1]);
         $this->assertSame(['foobar'], $passed[2]);
         $this->assertSame($sleeve, $passed[3]);
+    }
+
+    public function testEmploy()
+    {
+        $c = new Sleeve();
+        $core = fn() => null;
+
+        $self = $this;
+        $contains = function () use ($self, $core, $c) {
+            /* $this will be bound to the Genie instance */
+            $self->assertSame($core, $this->core);
+            $self->assertSame($c, $this->container);
+        };
+        $this->with(new Genie($c, $core), $contains);
+        $this->with(Genie::employ($c, $core), $contains);
     }
 }

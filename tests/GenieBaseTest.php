@@ -8,15 +8,13 @@ use Dakujem\Wire\Attributes\Wire;
 use Dakujem\Wire\Genie;
 use PHPUnit\Framework\TestCase;
 
-require_once 'AssertsErrors.php';
-require_once 'testHelperClasses.php';
-
 /**
  * @internal test
  */
 abstract class GenieBaseTest extends TestCase
 {
     use AssertsErrors;
+    use WithStuff;
 
     protected function _FillsInArguments(Genie $g)
     {
@@ -55,20 +53,6 @@ abstract class GenieBaseTest extends TestCase
         $this->assertSame(0, $rv); // sleep returns 0 on success
         $rv = $g->invoke(self::class . '::thisMethodIsStatic', 42);
         $check($rv);
-    }
-
-    #---------------------------------
-
-    /**
-     * Invokes a Closure and binds $this to the object given via the first parameter.
-     *
-     * @param string|object $objectOrClass
-     * @param \Closure $closure
-     * @return mixed
-     */
-    protected static function with(string|object $objectOrClass, \Closure $closure): mixed
-    {
-        return $closure->bindTo(is_object($objectOrClass) ? $objectOrClass : null, $objectOrClass)();
     }
 
     #---------------------------------

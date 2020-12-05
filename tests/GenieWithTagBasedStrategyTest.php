@@ -10,9 +10,6 @@ use Dakujem\WireGenie;
 use Psr\Container\ContainerInterface;
 use ReflectionFunctionAbstract;
 
-require_once 'AssertsErrors.php';
-require_once 'testHelperClasses.php';
-
 /**
  * @internal test
  */

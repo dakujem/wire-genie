@@ -15,9 +15,6 @@ use Dakujem\Wire\Genie;
 use Error;
 use Psr\Container\ContainerInterface as C;
 
-require_once 'AssertsErrors.php';
-require_once 'testHelperClasses.php';
-
 /**
  * @internal test
  */
@@ -282,6 +279,27 @@ final class GenieWithAttributeBasedStrategyTest extends GenieBaseTest
         $this->assertCount(5, $named);
     }
 
+    public function testFallback()
+    {
+        // Wire -> Hot -> Make
+        $f = fn(
+            // wire hint fails, Hot fails, Make fails, type-hint is resolved
+            #[Wire(Zero::class), Hot, Make(Coefficient::class)] Offset $anOffset,
+            #[Wire(Elephant::class), Hot] Animal $aLefant, // wiring fails, Hot will create an Animal instance
+            #[Wire(Zero::class), Hot] Formula $aFormula, // wiring hint fails, Hot fails, Coefficient is fetched from the container
+        ) => func_get_args();
+        $g = new Genie($c = new Sleeve([
+            Offset::class => fn() => new Offset(new Constant(0.0), new Coefficient(1.0)),
+            Formula::class => fn($c) => $c[Offset::class],
+        ]));
+
+        $args = $g($f);
+
+        $this->assertSame($c[Offset::class], $args[0] ?? null);
+        $this->assertInstanceOf(Animal::class, $args[1] ?? null);
+        $this->assertSame($c[Offset::class], $args[2] ?? null);
+    }
+
     public function testInvokerFillsInArguments()
     {
         $invoker = new Genie(ContainerProvider::createContainer());
@@ -370,5 +388,27 @@ final class GenieWithAttributeBasedStrategyTest extends GenieBaseTest
         $rv = $g->construct(HollowWillow::class);
         $this->assertInstanceOf(HollowWillow::class, $rv);
         $this->assertSame([$sleeve->get(Plant::class)], $rv->args);
+    }
+
+    public function testInvocationTypeSwitch()
+    {
+        $g = new Genie($c = new Sleeve([
+            Constant::class => new Constant(0.0),
+            Coefficient::class => new Coefficient(1.0),
+            Offset::class => fn($c) => new Offset($c[Constant::class], $c[Coefficient::class]),
+        ]));
+
+        $o1 = $g(Offset::class);
+        $o2 = $g(fn(Offset $offset) => $offset);
+
+        $this->assertSame($c[Offset::class], $o2);
+        $this->assertInstanceOf(Offset::class, $o1);
+        $this->assertNotSame($c[Offset::class], $o1); // must not be the same, one is created, other one is from the container
+        $self = $this;
+        $this->with($o1, function () use ($self, $c) {
+            // assert that the services contained inside the newly created Offset instance come from the container
+            $self->assertSame($c[Constant::class], $this->absolute);
+            $self->assertSame($c[Coefficient::class], $this->relative);
+        });
     }
 }

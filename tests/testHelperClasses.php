@@ -51,11 +51,11 @@ class ContainerProvider
     }
 }
 
-class Plant
+class Animal
 {
 }
 
-class Animal
+class Plant
 {
 }
 
@@ -74,6 +74,7 @@ class Frog extends Animal
 class Lion extends Animal
 {
 }
+
 class Elephant extends Animal
 {
 }
@@ -144,3 +145,49 @@ class MyOtherService implements ServiceInterface
         $this->thing = $thing;
     }
 }
+
+interface Expression
+{
+}
+
+class Formula implements Expression
+{
+}
+
+/**
+ * 0
+ */
+class Zero extends Formula
+{
+}
+
+/**
+ * 4X
+ */
+class Coefficient extends Formula
+{
+    public function __construct(private float $factor)
+    {
+    }
+}
+
+/**
+ * X + 2
+ */
+class Constant extends Formula
+{
+    public function __construct(private float $value)
+    {
+    }
+}
+
+/**
+ * 4X + 2
+ */
+class Offset extends Formula
+{
+    public function __construct(private Constant $absolute, private Coefficient $relative)
+    {
+    }
+}
+

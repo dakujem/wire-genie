@@ -10,8 +10,6 @@ use ReflectionFunction;
 use ReflectionFunctionAbstract;
 use ReflectionMethod;
 
-require_once 'AssertsErrors.php';
-
 /**
  * @internal test
  */

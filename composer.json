@@ -25,7 +25,8 @@
   "autoload-dev": {
     "psr-4": {
       "Dakujem\\Wire\\Tests\\": "tests/"
-    }
+    },
+    "files": ["tests/testHelperClasses.php"]
   },
   "scripts": {
     "test": "phpunit tests",
