@@ -33,6 +33,18 @@ The dox is not finished yet. Feel free to experiment though, the genie has great
 
 ---
 
+A superpowered `call_user_func`? Yup! And more.
+
+Wire Genie uses your PSR-11 service container to "magically" provide arguments (dependencies).
+
+Allows you to:
+- invoke any callables
+- construct any objects
+
+... with high level of control over the arguments. 💪
+
+
+## Usage
 
 Automatically wire services from a service container to **invoke callables** or **construct objects**.
 
@@ -50,7 +62,7 @@ class Something {
 
 $g = new Dakujem\Wire\Genie($container);
 
-// Magic! The arguments are resolved from the container.
+// Magic! The dependencies are resolved from the container.
 $value  = $g->invoke($callable);
 $object = $g->construct(Something::class);
 ```
@@ -59,7 +71,7 @@ That is only the basis, the process is customizable and more powerful.
 
 For each parameter it is possible to:
 - override type-hint and wire an explicit dependency (override the type-hint)
-- construct missing services on demand
+- construct missing services on demand (resolves cascading dependencies too)
 - skip wiring (treat as unresolvable)
 - override value (bypass the container)
 
@@ -98,12 +110,26 @@ For each parameter...
 2. If `#[Skip]` hint is present, skip steps 3-6 and treat the parameter as unresolvable.
 3. If a `#[Wire(Identifier::class)]` hint (attribute) is present, resolve the hinted identifier using the container.
 4. Resolve the type-hinted identifier using the container.
-5. If `#[Hot]` hint is present, try to create the type-hinted class.
-6. If `#[Make(Name::class)]` hint is present, create the hinted class.
+5. If `#[Hot]` hint is present, attempt to create the type-hinted class. Resolve cascading dependencies.
+6. If `#[Make(Name::class)]` hint is present, attempt to create the hinted class. Resolve cascading dependencies.
 7. When a parameter is unresolvable, try filling in an argument from the pool.
-8. When a default parameter value is present, use it.
+8. If a default parameter value is defined, use it.
 9. If the parameter is nullable, use `null`.
 10. Fail utterly.
+
+
+### Hints / attributes
+
+As you can see, the algorithm uses native attributes as hints to control the wiring.
+
+`#[Wire(Identifier::class)]` tells Genie to try to wire the service registered as `Identifier` from the container\
+`#[Wire('identifier')]` tells Genie to try to wire service with `'identifier'` identifier from the container\
+`#[Hot]` tells Genie to try to create the type-hinted class (works with union types too) \
+`#[Make(Service::class, 42, 'argument')]` tells Genie to try to create `Service` class using `42` and `'argument'` as the argument pool for the construction \
+`#Skip` tells Genie not to use the container at all
+
+`Hot` and `Make` work recursively,
+their constructor dependencies will be resolved from the container or created on the fly too.
 
 
 ## What can it be used for?
@@ -116,9 +142,9 @@ For each parameter...
   - for controllers, where dependencies are wired at runtime
 
 
-**🚧🚧🚧 TODO real example: job dispatcher**
+**🚧 TODO real example: job dispatcher**
 
-**🚧🚧🚧 TODO real example: controller method injector**
+**🚧 TODO real example: controller method injector**
 
 
 ### A word of caution
@@ -200,7 +226,7 @@ thus providing ultimate configurability.
 
 ## Compatibility
 
-Any PSR-11 container can be used.
+Framework agnostic. Any PSR-11 container can be used.
 
 
 ## Wonderful lamp
