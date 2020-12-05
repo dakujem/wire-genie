@@ -1,7 +1,7 @@
 # Wire Genie 🧞
 
-![PHP from Packagist](https://img.shields.io/packagist/php-v/dakujem/wire-genie)
-[![Build Status](https://travis-ci.org/dakujem/wire-genie.svg?branch=master)](https://travis-ci.org/dakujem/wire-genie)
+[![PHP req.](https://img.shields.io/packagist/php-v/dakujem/wire-genie)](https://packagist.org/packages/dakujem/wire-genie)
+[![Build Status](https://travis-ci.org/dakujem/wire-genie.svg?branch=trunk)](https://travis-ci.org/dakujem/wire-genie)
 
 **Autowiring Tool & Dependency Provider** for PSR-11 service containers.
 Wire with genie powers.
