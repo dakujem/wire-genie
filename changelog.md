@@ -2,11 +2,17 @@
 
 | Wire Genie version / branch | Supported PHP versions |
 |:----------------------------|:-----------------------|
-| `v3.x`  | 8.0+ (with native attributes support) |
-| `v2.99` | 8.0  (with native attributes support) |
-| `v2.x`  | 7.2, 7.3, 7.4, 8.0+ |
-| `v1.1`  | 7.2, 7.3, 7.4, 8.0  |
+| [`v3.x`](https://github.com/dakujem/wire-genie)             | 8.0+ (native attributes support) |
+| [`v2.99`](https://github.com/dakujem/wire-genie/tree/v2.99) | 8.0  (native attributes support) |
+| [`v2.x`](https://github.com/dakujem/wire-genie/tree/v2)     | 7.2, 7.3, 7.4, 8.0+ |
+| [`v1.x`](https://github.com/dakujem/wire-genie/tree/v1)     | 7.2, 7.3, 7.4, 8.0  |
 
+Migration path for PHP 8:
+```
+ 1.x -> 2.x -> 2.99 -> 3.x
+\__________/  
+   PHP 7      -> PHP 8
+```
 
 
 ## v3

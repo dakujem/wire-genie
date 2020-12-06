@@ -47,7 +47,7 @@ final class TagBasedStrategy
     private $reflector;
 
     /**
-     * Construct an instance of WireInvoker. Really? Yup!
+     * Resolver strategy based on reflection and annotations.
      *
      * Detector, reflector and service proxy work as a pipeline to provide a service for a target's parameter:
      *      $service = $serviceProxy( $detector( $reflector( $target ) ) )

@@ -1,8 +1,8 @@
 # Wire Genie 🧞
 
-[![PHP req.](https://img.shields.io/packagist/php-v/dakujem/wire-genie)](https://packagist.org/packages/dakujem/wire-genie)
-[![Build Status](https://travis-ci.org/dakujem/wire-genie.svg?branch=trunk)](https://travis-ci.org/dakujem/wire-genie)
-[![Coverage Status](https://coveralls.io/repos/github/dakujem/wire-genie/badge.svg?branch=trunk)](https://coveralls.io/github/dakujem/wire-genie?branch=trunk)
+[![PHP req.](https://img.shields.io/packagist/php-v/dakujem/wire-genie/2.99)](https://packagist.org/packages/dakujem/wire-genie)
+[![Build Status](https://travis-ci.org/dakujem/wire-genie.svg?branch=v2.99)](https://travis-ci.org/dakujem/wire-genie)
+[![Coverage Status](https://coveralls.io/repos/github/dakujem/wire-genie/badge.svg?branch=v2.99)](https://coveralls.io/github/dakujem/wire-genie)
 
 **Autowiring Tool & Dependency Provider** for PSR-11 service containers.
 Wire with genie powers.
@@ -10,31 +10,6 @@ Wire with genie powers.
 >
 > 💿 `composer require dakujem/wire-genie`
 >
-
-
-
-## 🚧 The documentation is under construction 🚧
-
-The documentation is not fully finished yet, but **the code is ready**.\
-Feel free to experiment, the genie has great powers! 💪
-
-TODOs
-
-- [x] namespace
-- [x] deprecations
-- [ ] docs
-- [?] examples
-- [x] compatibility (for annotations/wire tags)
-- [x] changelog / migration guide
-- [x] REJECTED split package for "providers" (provider, limiter)? (`d\Contain`, `d\Deal`, `d\Dispense`)
-- [x] TODO(s) in code
-- [x] coverage
-
----
-
-
-
-
 
 A superpowered `call_user_func`? Yup! And more.
 
@@ -45,6 +20,35 @@ Allows you to:
 - **construct any objects**
 
 ... with control over the arguments. 💪
+
+
+## Transition to _native attributes_ in PHP 8
+
+>
+> 👀
+>
+> This is a transitional version for migrating your code using `v2` annotations to native attributes used in `v3`.\
+> Once you are done migrating the annotations, switch to `v3`.
+>
+
+Initialize your `Genie` instances with the new `AttributeBasedStrategy`:
+
+```php
+new Genie($container, new AttributeBasedStrategy());
+```
+
+Update your code to use _native attributes_ instead of the _wire tag_ in `@param` annotations.
+
+| Old code using _wire tags_ | Replace with new code |
+|:---------|:-------------|
+| `@param $foo [wire:identifier]` | `#[Wire('identifier')]` attribute |
+| `@param $foo [wire:App\Services\FooService]` (class-name wire tag) | `#[Wire(App\Services\FooService::class)]` attribute |
+| `@param $foo [wire:]` (empty wire tag) | `#[Skip]` attribute |
+
+These attributes need to be applied on the particular parameter:
+```php
+function(#[Wire('identifier')] $service1, #[Skip] $service2) { ... }
+```
 
 
 ## Usage
@@ -110,6 +114,9 @@ Genie::construct( string $target, ...$pool );
 ```
 ... where the variadic `$pool` is a list of values that will be used for unresolvable parameters.
 
+
+> `TagBasedStrategy` / annotations / v2, v1 👇
+
 The resolution algorithm works like the following. If any step succeeds, the rest is skipped.\
 For each parameter...
 1. Look for a "wire tag" in the `@param` annotation, resolve its identifier from the container
@@ -120,6 +127,22 @@ For each parameter...
 3. Resolve the type-hinted identifier using the container.
 4. When a parameter is unresolvable, try filling in an argument from the pool.
 5. Try to skip the parameter. Fails when it has no default value. You need to provide arguments to the pool.
+
+
+> `AttributeBasedStrategy` / attributes / v3 👇
+
+The resolution algorithm works like the following. If any step succeeds, the rest is skipped.\
+For each parameter...
+1. If the parameter name matches a _named argument_ from the pool, use it.
+2. If `#[Skip]` hint is present, skip steps 3-6 and treat the parameter as unresolvable.
+3. If a `#[Wire(Identifier::class)]` hint (attribute) is present, resolve the hinted identifier using the container.
+4. Resolve the type-hinted identifier using the container.
+5. If `#[Hot]` hint is present, attempt to create the type-hinted class. Resolve cascading dependencies.
+6. If `#[Make(Name::class)]` hint is present, attempt to create the hinted class. Resolve cascading dependencies.
+7. When a parameter is unresolvable, try filling in an argument from the pool.
+8. If a default parameter value is defined, use it.
+9. If the parameter is nullable, use `null`.
+10. Fail utterly.
 
 
 ### Hints / attributes
@@ -145,10 +168,11 @@ their constructor dependencies will be resolved from the container or created on
 - _method dependency injection_
   - for controllers, where dependencies are wired at runtime
 
-
+<!--
 **🚧 TODO real example: job dispatcher**
 
 **🚧 TODO real example: controller method injector**
+-->
 
 
 ### A word of caution
