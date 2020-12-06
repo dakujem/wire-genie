@@ -18,7 +18,9 @@ final class LampTest extends TestCase
 
     public function testRubbing(): void
     {
-        $lamp = new Lamp($c = new Sleeve(), $core = fn() => null);
+        $lamp = new Lamp($c = new Sleeve(), $core = function () {
+            return null;
+        });
 
         $g = $lamp->rub();
 
