@@ -13,14 +13,6 @@ Wire with genie powers.
 
 
 
-
----
-
-## 🚧 The documentation is under construction 🚧
-
-... but **the code is ready**.\
-Feel free to dive in, the genie has great powers! 💪
-
 <!--
 TODOs
 
@@ -34,10 +26,6 @@ TODOs
 - [x] TODO(s) in code
 - [x] coverage
 -->
-
----
-
-
 
 
 
@@ -148,9 +136,10 @@ their constructor dependencies will be resolved from the container or created on
   - for controllers, where dependencies are wired at runtime
 
 
-**🚧 TODO real example: job dispatcher**
-
+<!--
+**🚧 TODO real example: job dispatcher**\
 **🚧 TODO real example: controller method injector**
+-->
 
 
 ### A word of caution
