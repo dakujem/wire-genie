@@ -47,20 +47,15 @@ final class GenieAttributesShowcaseTest extends GenieBaseTest
             return func_get_args();
         };
 
-        $g = new Genie($sleeve);
-        $args = [
-            ...$this->with($g, function () use ($toCall) {
-                return $this->resolveArguments(
-                    $toCall,
-                    'not autowired',
-                    null,
-                    'another value',
-                    'these are the remaining arguments',
-                    123,
-                    value: 42,
-                );
-            }),
-        ];
+        $args = (new Genie($sleeve))->provision(
+            $toCall,
+            'not autowired',
+            null,
+            'another value',
+            'these are the remaining arguments',
+            123,
+            value: 42,
+        );
 
         $this->assertInstanceOf(Thing::class, $args[0] ?? null);
         $this->assertSame($sleeve[Thing::class], $args[0] ?? null);
