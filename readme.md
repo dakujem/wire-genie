@@ -28,6 +28,7 @@ TODOs
 -->
 
 
+## What?
 
 A superpowered `call_user_func`? Yup! And more.
 
