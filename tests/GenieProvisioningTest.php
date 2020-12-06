@@ -26,7 +26,7 @@ final class GenieProvisioningTest extends TestCase
         $this->assertTrue($wg->provide() instanceof Simpleton);
     }
 
-    public function testProvisioning()
+    public function testGenieProvidesServices()
     {
         $sleeve = ContainerProvider::createContainer();
         $wg = new Genie($sleeve);

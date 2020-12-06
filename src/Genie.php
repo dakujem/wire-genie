@@ -92,6 +92,20 @@ final class Genie implements Invoker, Constructor
     }
 
     /**
+     * Inspect the given target and return an iterable list of arguments
+     * usable for invoking/constructing the target (using argument unpacking, the splat operator).
+     * Does not invoke/construct the target.
+     *
+     * @param callable|string $target
+     * @param mixed ...$pool
+     * @return iterable
+     */
+    public function provision($target, ...$pool): iterable
+    {
+        return $this->resolveArguments($target, ...$pool);
+    }
+
+    /**
      * Provide services without directly exposing them.
      * Returns a fellow invoker with the requested services provisioned.
      *

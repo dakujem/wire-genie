@@ -15,6 +15,19 @@ class GenieCoreTest extends TestCase
 {
     use WithStuff;
 
+    public function testGenieProvisionsCallArguments()
+    {
+        $g = new Genie($c = new Sleeve([
+            Frog::class => new Frog(),
+        ]));
+        $f1 = function (Frog $frog, int $answer) {
+        };
+        $args = $g->provision($f1, 42);
+        $this->assertSame($c[Frog::class], $args[0]);
+        $this->assertSame(42, $args[1]);
+        $this->assertCount(2, $args);
+    }
+
     public function testGenieUsesACoreProperlyPassingArguments()
     {
         $passed = [];
