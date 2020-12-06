@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Dakujem\Wire\Tests;
 
-use Dakujem\Wire\Attributes\Wire;
 use Dakujem\Wire\Genie;
 use PHPUnit\Framework\TestCase;
 
@@ -72,11 +71,6 @@ abstract class GenieBaseTest extends TestCase
      * @param mixed $theAnswer [wire:genie]
      */
     public function methodTagOverride(Animal $animal, $theAnswer): array
-    {
-        return func_get_args();
-    }
-
-    public function methodAttributeOverride(#[Wire(Sheep::class)] Animal $animal, #[Wire('genie')] $theAnswer): array
     {
         return func_get_args();
     }

@@ -28,7 +28,7 @@ final class Inspector
      * @return FunctionRef|null
      * @throws ReflectionException
      */
-    public static function reflectionOf(callable|string $target): ?FunctionRef
+    public static function reflectionOf($target): ?FunctionRef
     {
         return is_string($target) && class_exists($target) ?
             static::reflectionOfConstructor($target) :

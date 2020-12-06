@@ -18,7 +18,7 @@ trait WithStuff
      * @param \Closure $closure
      * @return mixed
      */
-    protected static function with(string|object $objectOrClass, \Closure $closure): mixed
+    protected static function with($objectOrClass, \Closure $closure) //: mixed
     {
         return $closure->bindTo(is_object($objectOrClass) ? $objectOrClass : null, $objectOrClass)();
     }

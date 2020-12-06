@@ -12,8 +12,6 @@ use ReflectionParameter as ParamRef;
 use ReflectionUnionType;
 
 /**
- * @deprecated in v3, switch to native attributes
- *
  * A resolver strategy composed of a detector, reflector and a service proxy.
  * By default, uses reflection and "wire tags".
  *
@@ -47,7 +45,7 @@ final class TagBasedStrategy
     private $reflector;
 
     /**
-     * Construct an instance of WireInvoker. Really? Yup!
+     * Resolver strategy based on reflection and annotations.
      *
      * Detector, reflector and service proxy work as a pipeline to provide a service for a target's parameter:
      *      $service = $serviceProxy( $detector( $reflector( $target ) ) )
@@ -77,15 +75,15 @@ final class TagBasedStrategy
 
     public function __invoke(
         Genie $genie,
-        callable|string $target,
-        ...$pool,
+        $target,
+        ...$pool
     ): iterable {
         return $this->resolveArguments(
             $genie->exposeContainer(function ($c): Container {
                 return $c;
             }),
             $target,
-            ...$pool,
+            ...$pool
         );
     }
 
@@ -270,7 +268,7 @@ final class TagBasedStrategy
      * @return FunctionRef|null
      * @throws ReflectionException
      */
-    public static function reflectionOf(callable|string $target): ?FunctionRef
+    public static function reflectionOf($target): ?FunctionRef
     {
         return Inspector::reflectionOf($target);
     }

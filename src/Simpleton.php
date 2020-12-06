@@ -28,7 +28,10 @@ class Simpleton implements Invoker, Constructor
 {
     use PredictableAccess;
 
-    private array $callArgs;
+    /**
+     * @var array
+     */
+    private $callArgs;
 
     /**
      * @param mixed ...$args arguments that will be passed to callables during the invocation.
@@ -45,7 +48,7 @@ class Simpleton implements Invoker, Constructor
      * @param callable $target callable to be invoked
      * @return mixed result of the $target callable invocation
      */
-    public function invoke(callable $target): mixed
+    public function invoke(callable $target)
     {
         return $target(...$this->callArgs);
     }
@@ -54,7 +57,7 @@ class Simpleton implements Invoker, Constructor
      * @param string $target
      * @return mixed
      */
-    public function construct(string $target): mixed
+    public function construct(string $target)
     {
         return new $target(...$this->callArgs);
     }
@@ -65,7 +68,7 @@ class Simpleton implements Invoker, Constructor
      * @param callable|string $target callable to be invoked or the name of a class to be constructed.
      * @return mixed result of the $target callable invocation or an instance of the requested class
      */
-    public function __invoke(callable|string $target): mixed
+    public function __invoke($target)
     {
         return is_string($target) && class_exists($target) ?
             $this->construct($target) :

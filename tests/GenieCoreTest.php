@@ -18,15 +18,19 @@ class GenieCoreTest extends TestCase
     public function testGenieUsesACoreProperlyPassingArguments()
     {
         $passed = [];
-        $core = function (Genie $g, string|callable $t, ...$args) use (&$passed): iterable {
-            $c = $g->exposeContainer(fn($c) => $c);
+        $core = function (Genie $g, $t, ...$args) use (&$passed): iterable {
+            $c = $g->exposeContainer(function ($c) {
+                return $c;
+            });
             $passed = [$g, $t, $args, $c];
             return [];
         };
 
         $sleeve = ContainerProvider::createContainer();
         $genie = new Genie($sleeve, $core);
-        $target = fn() => 'ok';
+        $target = function () {
+            return 'ok';
+        };
 
         $ok = $genie->invoke($target, 'foobar');
 
@@ -40,7 +44,9 @@ class GenieCoreTest extends TestCase
     public function testEmploy()
     {
         $c = new Sleeve();
-        $core = fn() => null;
+        $core = function () {
+            return null;
+        };
 
         $self = $this;
         $contains = function () use ($self, $core, $c) {

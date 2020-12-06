@@ -1,8 +1,8 @@
 # Wire Genie 🧞
 
-[![PHP req.](https://img.shields.io/packagist/php-v/dakujem/wire-genie)](https://packagist.org/packages/dakujem/wire-genie)
-[![Build Status](https://travis-ci.org/dakujem/wire-genie.svg?branch=trunk)](https://travis-ci.org/dakujem/wire-genie)
-[![Coverage Status](https://coveralls.io/repos/github/dakujem/wire-genie/badge.svg?branch=trunk)](https://coveralls.io/github/dakujem/wire-genie?branch=trunk)
+[![PHP req.](https://img.shields.io/packagist/php-v/dakujem/wire-genie/2.0)](https://packagist.org/packages/dakujem/wire-genie)
+[![Build Status](https://travis-ci.org/dakujem/wire-genie.svg?branch=v2)](https://travis-ci.org/dakujem/wire-genie)
+[![Coverage Status](https://coveralls.io/repos/github/dakujem/wire-genie/badge.svg?branch=v2)](https://coveralls.io/github/dakujem/wire-genie)
 
 **Autowiring Tool & Dependency Provider** for PSR-11 service containers.
 Wire with genie powers.
@@ -11,30 +11,7 @@ Wire with genie powers.
 > 💿 `composer require dakujem/wire-genie`
 >
 
-
-
-## 🚧 The documentation is under construction 🚧
-
-The documentation is not fully finished yet, but **the code is ready**.\
-Feel free to experiment, the genie has great powers! 💪
-
-TODOs
-
-- [x] namespace
-- [x] deprecations
-- [ ] docs
-- [?] examples
-- [x] compatibility (for annotations/wire tags)
-- [x] changelog / migration guide
-- [x] REJECTED split package for "providers" (provider, limiter)? (`d\Contain`, `d\Deal`, `d\Dispense`)
-- [x] TODO(s) in code
-- [x] coverage
-
----
-
-
-
-
+## What?
 
 A superpowered `call_user_func`? Yup! And more.
 
@@ -122,20 +99,6 @@ For each parameter...
 5. Try to skip the parameter. Fails when it has no default value. You need to provide arguments to the pool.
 
 
-### Hints / attributes
-
-As you can see, the algorithm uses native attributes as hints to control the wiring.
-
-`#[Wire(Identifier::class)]` tells Genie to try to wire the service registered as `Identifier` from the container\
-`#[Wire('identifier')]` tells Genie to try to wire service with `'identifier'` identifier from the container\
-`#[Hot]` tells Genie to try to create the type-hinted class (works with union types too) \
-`#[Make(Service::class, 42, 'argument')]` tells Genie to try to create `Service` class using `42` and `'argument'` as the argument pool for the construction \
-`#Skip` tells Genie not to use the container at all
-
-`Hot` and `Make` work recursively,
-their constructor dependencies will be resolved from the container or created on the fly too.
-
-
 ## What can it be used for?
 
 - middleware / pipeline _dispatchers_
@@ -145,10 +108,11 @@ their constructor dependencies will be resolved from the container or created on
 - _method dependency injection_
   - for controllers, where dependencies are wired at runtime
 
-
+<!--
 **🚧 TODO real example: job dispatcher**
 
 **🚧 TODO real example: controller method injector**
+-->
 
 
 ### A word of caution
@@ -184,7 +148,7 @@ with methods like the following one:
  * Returns the callable's return value.
  * Also allows to create objects passing in a class name.
  */ 
-public function call(/*callable|string*/ $target, ...$pool): mixed
+public function call(/*callable|string*/ $target, ...$pool) //: mixed
 {
     return Genie::employ($this->container)($target, ...$pool);
 }

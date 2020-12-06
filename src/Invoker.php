@@ -20,5 +20,5 @@ interface Invoker
      * @param callable $target callable to be invoked
      * @return mixed result of the $target callable invocation
      */
-    public function invoke(callable $target): mixed;
+    public function invoke(callable $target);
 }

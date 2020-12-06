@@ -15,13 +15,22 @@ final class Lamp
 {
     use PredictableAccess;
 
+    /**
+     * @var Container
+     */
+    private $container;
+
+    /**
+     * @var callable|null
+     */
     private $core;
 
     public function __construct(
-        private Container $container,
-        ?callable $core = null,
+        Container $container,
+        ?callable $core = null
     ) {
         $this->core = $core;
+        $this->container = $container;
     }
 
     /**

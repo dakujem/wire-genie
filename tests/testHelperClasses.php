@@ -126,7 +126,7 @@ interface ServiceInterface
 
 class MyService implements ServiceInterface
 {
-    public Thing $thing;
+    public $thing;
     public $foo;
 
     public function __construct(Thing $thing, $foo)
@@ -138,7 +138,7 @@ class MyService implements ServiceInterface
 
 class MyOtherService implements ServiceInterface
 {
-    public Thing $thing;
+    public $thing;
 
     public function __construct(Thing $thing)
     {
@@ -166,8 +166,14 @@ class Zero extends Formula
  */
 class Coefficient extends Formula
 {
-    public function __construct(private float $factor)
+    /**
+     * @var float
+     */
+    private $factor;
+
+    public function __construct( float $factor)
     {
+        $this->factor = $factor;
     }
 }
 
@@ -176,8 +182,14 @@ class Coefficient extends Formula
  */
 class Constant extends Formula
 {
-    public function __construct(private float $value)
+    /**
+     * @var float
+     */
+    private $value;
+
+    public function __construct( float $value)
     {
+        $this->value = $value;
     }
 }
 
@@ -186,8 +198,19 @@ class Constant extends Formula
  */
 class Offset extends Formula
 {
-    public function __construct(private Constant $absolute, private Coefficient $relative)
+    /**
+     * @var Constant
+     */
+    private $absolute;
+    /**
+     * @var Coefficient
+     */
+    private $relative;
+
+    public function __construct( Constant $absolute,  Coefficient $relative)
     {
+        $this->absolute = $absolute;
+        $this->relative = $relative;
     }
 }
 

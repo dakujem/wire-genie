@@ -16,6 +16,6 @@ class UnresolvableCallArguments extends RuntimeException implements Unresolvable
 {
     public static function from(Throwable $previous): self
     {
-        return new static(message: $previous->getMessage(), previous: $previous);
+        return new static($previous->getMessage(), 0, $previous);
     }
 }

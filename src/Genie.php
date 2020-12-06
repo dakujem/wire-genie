@@ -12,10 +12,10 @@ use Psr\Container\ContainerInterface as Container;
 /**
  * Wire Genie - a magical invoker of callables and constructor of classes. Also provides wishes.
  *
- * By default, it uses the reflection API and leverages PHP 8 attributes, but can be configured otherwise.
+ * By default, it uses the reflection API and annotations with "wire tags", but can be configured otherwise.
  *
  * The class revolves around three methods and the default resolver strategy:
- * @see AttributeBasedStrategy
+ * @see TagBasedStrategy
  * @see Genie::invoke()
  * @see Genie::construct()
  * @see Genie::provide()
@@ -25,6 +25,12 @@ use Psr\Container\ContainerInterface as Container;
 final class Genie implements Invoker, Constructor
 {
     use PredictableAccess;
+
+    /**
+     * PSR-11 container.
+     * @var Container
+     */
+    private $container;
 
     /**
      * A callable resolver _strategy_.
@@ -50,9 +56,10 @@ final class Genie implements Invoker, Constructor
      *                            MUST return an iterable type
      */
     public function __construct(
-        private Container $container,
-        ?callable $core = null,
+        Container $container,
+        ?callable $core = null
     ) {
+        $this->container = $container;
         $this->core = $core;
     }
 
@@ -65,7 +72,7 @@ final class Genie implements Invoker, Constructor
      * @param mixed ...$pool static argument pool
      * @return mixed result of the $target callable invocation
      */
-    public function invoke(callable $target, ...$pool): mixed
+    public function invoke(callable $target, ...$pool)
     {
         return $target(...$this->resolveArguments($target, ...$pool));
     }
@@ -79,7 +86,7 @@ final class Genie implements Invoker, Constructor
      * @param mixed ...$pool static argument pool
      * @return mixed the constructed class instance
      */
-    public function construct(string $target, ...$pool): mixed
+    public function construct(string $target, ...$pool)
     {
         return new $target(...$this->resolveArguments($target, ...$pool));
     }
@@ -100,7 +107,9 @@ final class Genie implements Invoker, Constructor
     public function provide(...$services): callable
     {
         $resolved = array_map(
-            fn($identifier) => $this->container->has($identifier) ? $this->container->get($identifier) : null,
+            function ($identifier) {
+                return $this->container->has($identifier) ? $this->container->get($identifier) : null;
+            },
             $services
         );
         return new Simpleton(...$resolved);
@@ -113,7 +122,7 @@ final class Genie implements Invoker, Constructor
      * @param mixed ...$staticArgs static argument pool
      * @return mixed result of the $target callable invocation or an instance of the requested class
      */
-    public function __invoke(callable|string $target, ...$staticArgs): mixed
+    public function __invoke($target, ...$staticArgs)
     {
         return is_string($target) && class_exists($target) ?
             $this->construct($target, ...$staticArgs) :
@@ -128,13 +137,13 @@ final class Genie implements Invoker, Constructor
      * @param mixed ...$staticArguments static arguments to fill in for parameters where identifier can not be detected
      * @return iterable
      */
-    private function resolveArguments(callable|string $target, ...$staticArguments): iterable
+    private function resolveArguments($target, ...$staticArguments): iterable
     {
         try {
-            return ($this->core ?? new AttributeBasedStrategy())(
+            return ($this->core ?? new TagBasedStrategy())(
                 $this,
                 $target,
-                ...$staticArguments,
+                ...$staticArguments
             );
         } catch (Unresolvable $ex) {
             throw UnresolvableCallArguments::from($ex);
@@ -148,7 +157,7 @@ final class Genie implements Invoker, Constructor
      * @param callable $worker fn(Container):mixed
      * @return mixed forwards the return value of the callable
      */
-    public function exposeContainer(callable $worker): mixed
+    public function exposeContainer(callable $worker)
     {
         return $worker($this->container, $this);
     }
@@ -161,7 +170,7 @@ final class Genie implements Invoker, Constructor
      * @param callable|null $core
      * @return self
      */
-    public static function employ(Container|self $source, ?callable $core = null): self
+    public static function employ($source, ?callable $core = null): self
     {
         return new self($source instanceof self ? $source->container : $source, $core);
     }
