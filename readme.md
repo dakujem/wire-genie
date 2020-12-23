@@ -12,22 +12,6 @@ Wire with genie powers.
 >
 
 
-
-<!--
-TODOs
-
-- [x] namespace
-- [x] deprecations
-- [ ] docs
-- [?] examples
-- [x] compatibility (for annotations/wire tags)
-- [x] changelog / migration guide
-- [x] REJECTED split package for "providers" (provider, limiter)? (`d\Contain`, `d\Deal`, `d\Dispense`)
-- [x] TODO(s) in code
-- [x] coverage
--->
-
-
 ## What?
 
 A superpowered `call_user_func`? Yup! And more.
@@ -72,21 +56,35 @@ For each parameter it is possible to:
 
 ```php
 // override type-hint(s)
-$callable = function (#[Wire(MyService::class)] ServiceInterface $service, #[Wire(Thing::class)] $thing){ ... };
+$callable = function (
+    #[Wire(MyService::class)] AnInterface $service,
+    #[Wire(Thing::class)] $thing
+){ ... };
 $value  = $g->invoke($callable);
 
 // construct object(s) if not present in the container
-$callable = function (#[Hot] Something $some, #[Make(Thing::class)] $thing){ ... };
+$callable = function (
+    #[Hot] Something $some,
+    #[Make(Thing::class)] $thing
+){ ... };
 $value  = $g->invoke($callable);
 
 // provide arguments for scalar-type, no-type and otherwise unresolvable parameters
 $callable = function (string $question, MyService $service, int $answer){ ... };
-$g->invoke($callable, 'The Ultimate Question of Life, the Universe, and Everything.', 42);
-$g->invoke($callable, answer: 42, question: 'The Ultimate Question of Life, the Universe, and Everything.',);
+$g->invoke(
+    $callable,
+    'The Ultimate Question of Life, the Universe, and Everything.',
+     42,
+);
+$g->invoke(
+    $callable,
+    answer: 42,
+    question: 'The Ultimate Question of Life, the Universe, and Everything.',
+);
 
-// skip wiring for a parameter
+// skip wiring for a parameter...
 $callable = function (#[Skip] MyService $service){ ... };
-$g->invoke($callable, new MyService(...)); // provide your own argument(s)
+$g->invoke($callable, new MyService(...)); // ...and provide your own argument(s)
 ```
 
 
@@ -137,8 +135,10 @@ their constructor dependencies will be resolved from the container or created on
   - for controllers, where dependencies are wired at runtime
 
 
+**Examples**
+- [asynchronous job execution](examples/jobExecute.php)
+
 <!--
-**🚧 TODO real example: job dispatcher**\
 **🚧 TODO real example: controller method injector**
 -->
 
@@ -202,7 +202,7 @@ $object = $g->provide( Dependency::class, OtherDependency::class )->invoke($fact
 
 You can limit the services accessible through `Genie` by using a filtering proxy `Limiter`:
 ```php
-$repoGenie = new Genie(
+$repoGenie = new Dakujem\Wire\Genie(
     new Dakujem\Wire\Limiter($container, [
         RepositoryInterface::class,
         // you may whitelist multiple classes or interfaces
