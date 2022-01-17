@@ -1,0 +1,56 @@
+name: Tests
+
+on:
+  # Controls when the action will be triggered.
+  push:           # A push to any branch.
+  pull_request: # A pull request to the main/master branch.
+    branches: [ trunk ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  php-tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        php-versions: [ '8.0', '8.1' ]
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    name: Run tests @ PHP ${{ matrix.php-versions }}
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
+      #    extensions: json
+      #    ini-values: "post_max_size=256M" #optional
+
+      - name: Validate composer.json and composer.lock
+        run: composer validate --strict
+
+      - name: Cache Composer packages
+        id: composer-cache
+        uses: actions/cache@v2
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Run TEST suite
+        run: composer run-script test:ci
+
+#
+#   I gave up on Coveralls since I have no idea how to set it up given the error with json_path. Pity.
+#   https://github.com/php-coveralls/php-coveralls/issues/339
+#
