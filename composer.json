@@ -30,8 +30,7 @@
   "scripts": {
     "test": "@test:local",
     "test:local": "phpunit tests",
-    "test:ci": "phpunit tests",
-    "test:travis": "phpunit tests --coverage-clover tests/output/clover.xml"
+    "test:ci": "phpunit tests"
   },
   "scripts-descriptions": {
     "test": "Run application tests. (defaults to local tests)",
