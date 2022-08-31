@@ -14,7 +14,8 @@
   },
   "require-dev": {
     "dakujem/sleeve": "^1",
-    "phpunit/phpunit": "^8 || ^9.1"
+    "pimple/pimple": "^3.4",
+    "phpunit/phpunit": "^9.5"
   },
   "autoload": {
     "psr-4": {
