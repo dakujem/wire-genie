@@ -1,11 +1,17 @@
+> 📖 back to [readme](readme.md)
+
 # Changelog & Migration guide
 
-| Wire Genie version / branch | Supported PHP versions |
-|:----------------------------|:-----------------------|
+> This package follows semantic versioning.  
+> Please report any issues.
+
+
+| Wire Genie version / branch                                 | Supported PHP versions           |
+|:------------------------------------------------------------|:---------------------------------|
 | [`v3.x`](https://github.com/dakujem/wire-genie)             | 8.0+ (native attributes support) |
 | [`v2.99`](https://github.com/dakujem/wire-genie/tree/v2.99) | 8.0  (native attributes support) |
-| [`v2.x`](https://github.com/dakujem/wire-genie/tree/v2)     | 7.2, 7.3, 7.4, 8.0+ |
-| [`v1.x`](https://github.com/dakujem/wire-genie/tree/v1)     | 7.2, 7.3, 7.4, 8.0  |
+| [`v2.x`](https://github.com/dakujem/wire-genie/tree/v2)     | 7.2, 7.3, 7.4, 8.0+              |
+| [`v1.x`](https://github.com/dakujem/wire-genie/tree/v1)     | 7.2, 7.3, 7.4, 8.0               |
 
 Migration path for PHP 8:
 ```
