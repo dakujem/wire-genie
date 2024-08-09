@@ -9,6 +9,8 @@ Wire with genie powers.
 >
 > 💿 `composer require dakujem/wire-genie`
 >
+> 📒 [Changelog](changelog.md)
+>
 
 
 ## What?
@@ -245,12 +247,9 @@ We've already got a lamp 🪔 and a genie 🧞 ... so?
 
 ## Installation
 
->
-> 💿 `composer require dakujem/wire-genie`
->
->
-> 📒 [Changelog & Migration guide](changelog.md)
->
+💿 `composer require dakujem/wire-genie`
+
+> Never heard of [Composer](https://getcomposer.org)? Go get it!
 
 
 ## Testing
