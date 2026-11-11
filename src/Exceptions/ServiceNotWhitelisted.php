@@ -15,7 +15,7 @@ use Throwable;
  */
 class ServiceNotWhitelisted extends RuntimeException implements ContainerExceptionInterface
 {
-    public function __construct($message = null, $code = 0, Throwable $previous = null)
+    public function __construct($message = null, $code = 0, ?Throwable $previous = null)
     {
         parent::__construct($message ?? 'Access to the service has not been granted.', $code, $previous);
     }

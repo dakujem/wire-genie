@@ -343,7 +343,7 @@ final class GenieWithAttributeBasedStrategyTest extends GenieBaseTest
         $func = function (Plant $foo, int $theAnswer) {
             return [$foo, $theAnswer];
         };
-        $func2 = function (Plant $foo, int $theAnswer = null) {
+        $func2 = function (Plant $foo, ?int $theAnswer = null) {
             return [$foo, $theAnswer];
         };
 
